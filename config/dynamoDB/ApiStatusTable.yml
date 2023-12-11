@@ -2,6 +2,7 @@ ApiStatusTable:
   Type: AWS::DynamoDB::Table
   Properties:
     TableName: omni-wms-shipengine-api-status-${self:provider.stage}
+    BillingMode: PAY_PER_REQUEST
     AttributeDefinitions:
       - AttributeName: ShipmentId
         AttributeType: S
