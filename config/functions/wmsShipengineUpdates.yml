@@ -26,7 +26,8 @@ function:
   events:
     - existingS3:
         bucket: ${ssm:/omni-dw/${self:provider.stage}/wms/bucket/name}
-        event: s3:ObjectCreated:*
+        events: 
+          - s3:ObjectCreated:*
         rules:
           - prefix: CargoWiseOutbound/WOU_WHC
-          - suffix: ${ssm:/omni-dw/${self:provider.stage}/wms/bucket/rules/suffix}
+          - suffix: .xml
