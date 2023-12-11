@@ -8,9 +8,8 @@ provider:
   memorySize: 512
   timeout: 30
   role: ${ssm:/omni-dw/${self:provider.stage}/lambda/role}
-  apiName: ${self:service}-api-${self:provider.stage}
   stackTags:
-    Application: Omni Warehouse Management Systems
+    Application: Omni Warehouse Management Data Sync
     CreateBy: BizCloudExperts
     Environment: ${self:provider.stage}
 
