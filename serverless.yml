@@ -1,4 +1,4 @@
-service: omni-wms-api-service
+service: omni-wms-datasync
 
 provider:
   name: aws
