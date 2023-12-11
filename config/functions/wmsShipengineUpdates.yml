@@ -1,0 +1,32 @@
+function:
+  name: omni-wms-shipengine-updates-${self:provider.stage}
+  handler: src/ShipEngineIntegration/index.handler
+  runtime: nodejs16.x 
+  timeout: 120
+  layers:
+    - { Ref: WmsShipengineLibsLambdaLayer }
+  environment:
+    WMS_ADAPTER_ENDPOINT: ${ssm:/omni-dw/${self:provider.stage}/wms/adapter/url}
+    WMS_ADAPTER_USERNAME: ${ssm:/omni-dw/${self:provider.stage}/wms/adapter/username}
+    WMS_ADAPTER_PASSWORD: ${ssm:/omni-dw/${self:provider.stage}/wms/adapter/password}
+    API_LOG_TABLE: !Ref ApiLogTable
+    API_STATUS_TABLE: !Ref ApiStatusTable
+
+  package:
+    patterns:
+      - "!**/*"
+      - "src/ShipEngineIntegration/index.js"
+
+  vpc:
+    securityGroupIds:
+      - ${ssm:/omni-dw/${self:provider.stage}/wms/asn/receipt/sgId}
+    subnetIds:
+      - ${ssm:/omni-dw/${self:provider.stage}/wms/asn/receipt/subnetA}
+
+  events:
+    - existingS3:
+        bucket: ${ssm:/omni-dw/${self:provider.stage}/wms/bucket/name}
+        event: s3:ObjectCreated:*
+        rules:
+          - prefix: CargoWiseOutbound/WOU_WHC
+          - suffix: ${ssm:/omni-dw/${self:provider.stage}/wms/bucket/rules/suffix}
