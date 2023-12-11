@@ -7,7 +7,6 @@ provider:
   stage: ${opt:stage, 'dev'}
   memorySize: 512
   timeout: 30
-  deploymentBucket: ${ssm:/omni-dw/${self:provider.stage}/sls/deployment/bucket}
   role: ${ssm:/omni-dw/${self:provider.stage}/lambda/role}
   apiName: ${self:service}-api-${self:provider.stage}
   stackTags:
