@@ -1,6 +1,7 @@
 const AWS = require('aws-sdk');
 const xml2js = require('xml2js');
 const { get, map } = require('lodash');
+const sns = new AWS.SNS();
 
 
 async function ShipEnginePayload(xmlData) {

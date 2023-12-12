@@ -66,7 +66,7 @@ async function makeApiRequest(apiName, payload) {
         }
         return response.data;
     } catch (error) {
-        throw new Error(`Failed to make API request to ${apiName}: ${error.response.data}`);
+        throw new Error(`Failed to make API request to ${apiName}: ${error.response.errors[0].message}`);
     }
 }
 
