@@ -24,8 +24,8 @@ layers:
       - nodejs16.x
     name: omni-wms-datasync-layer-${self:provider.stage}
 
-functions:
-  wmsshipengineupdates: ${file(config/functions/wmsShipengineUpdates.yml):function}
+# functions:
+#   wmsshipengineupdates: ${file(config/functions/wmsShipengineUpdates.yml):function}
 
 resources:
   Resources:
