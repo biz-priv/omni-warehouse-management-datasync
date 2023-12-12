@@ -32,5 +32,5 @@ function:
         events: 
           - s3:ObjectCreated:*
         rules:
-          - prefix: CargoWiseOutbound/WOU_WHC
+          - prefix: CargoWiseOutbound/WOU_PKC
           - suffix: .xml
