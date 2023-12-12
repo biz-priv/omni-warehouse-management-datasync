@@ -11,11 +11,15 @@ function:
     WMS_ADAPTER_PASSWORD: ${ssm:/omni-dw/${self:provider.stage}/wms/adapter/password}
     API_LOG_TABLE: !Ref ApiLogTable
     API_STATUS_TABLE: !Ref ApiStatusTable
-
+    SHIPENGINE_API_KEY: ${ssm:/wms-shipengine/${self:provider.stage}/api/key}
+    SHIPENGINE_API_ENDPOINT: ${ssm:/wms-shipengine/${self:provider.stage}/api/endpoint}
+    ERROR_SNS_ARN: ${ssm:/omni-reports/${self:provider.stage}/error-notification/sns/arn}
+    
   package:
     patterns:
       - "!**/*"
       - "src/ShipEngineIntegration/index.js"
+      - "src/shared"
 
   vpc:
     securityGroupIds:

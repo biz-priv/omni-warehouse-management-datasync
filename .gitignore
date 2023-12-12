@@ -132,3 +132,4 @@ package-lock.json
 event.json
 response.json
 test.js
+src/sample.json
