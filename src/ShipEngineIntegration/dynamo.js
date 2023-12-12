@@ -2,6 +2,7 @@ const AWS = require('aws-sdk');
 const momentTZ = require("moment-timezone");
 const dynamoDB = new AWS.DynamoDB.DocumentClient();
 const { API_STATUS_TABLE, API_LOG_TABLE } = process.env;
+const { get } = require('lodash');
 
 const InsertedTimeStamp = momentTZ.tz("America/Chicago").format("YYYY:MM:DD HH:mm:ss").toString();
 
@@ -17,7 +18,7 @@ async function insertApiStatus(apiStatusId, status, externalShipmentId) {
             },
         };
         await dynamoDB.put(params).promise();
-        console.info('ApiStatus updated:', params.Item);
+        console.info('ApiStatus updated:', get(params, "Item"));
     } catch (error) {
         console.error('Error in insertApiStatus:', error);
         throw error;
@@ -35,7 +36,7 @@ async function updateApiStatus(apiStatusId, attributeName, attributeValue, exter
             },
         };
         await dynamoDB.update(params).promise();
-        console.info('ApiStatus updated:', params.Key, params.UpdateExpression, params.ExpressionAttributeValues);
+        console.info('ApiStatus updated:', get(params, "Key", ""), get(params, "UpdateExpression", ""), get(params, "ExpressionAttributeValues", ""));
     } catch (error) {
         console.error('Error in updateApiStatus:', error);
         throw error;
@@ -56,7 +57,7 @@ async function storeApiLog(externalShipmentId, apiName, requestPayload, response
             },
         };
         await dynamoDB.put(params).promise();
-        console.info('ApiLog stored:', params.Item);
+        console.info('ApiLog stored:', get(params, "Item"));
     } catch (error) {
         console.error('Error in storeApiLog:', error);
         throw error;

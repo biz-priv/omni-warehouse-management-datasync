@@ -35,8 +35,6 @@ async function getS3Object(bucket, key) {
     }
 }
 
-
-
 async function makeApiRequest(apiName, payload) {
     try {
         let ApiEndpoint;
@@ -68,7 +66,7 @@ async function makeApiRequest(apiName, payload) {
         }
         return response.data;
     } catch (error) {
-        throw new Error(`Failed to make API request to ${apiName}: ${error.message}`);
+        throw new Error(`Failed to make API request to ${apiName}: ${error.response.data}`);
     }
 }
 
