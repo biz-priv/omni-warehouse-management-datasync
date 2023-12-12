@@ -18,7 +18,7 @@ async function insertApiStatus(apiStatusId, status, externalShipmentId) {
             },
         };
         await dynamoDB.put(params).promise();
-        console.info('ApiStatus updated:', get(params, "Item"));
+        console.info(`Inserted API status ShipEngine ${status}`);
     } catch (error) {
         console.error('Error in insertApiStatus:', error);
         throw error;
@@ -36,7 +36,7 @@ async function updateApiStatus(apiStatusId, attributeName, attributeValue, exter
             },
         };
         await dynamoDB.update(params).promise();
-        console.info('ApiStatus updated:', get(params, "Key", ""), get(params, "UpdateExpression", ""), get(params, "ExpressionAttributeValues", ""));
+        console.info(`ApiStatus stored for ${attributeName}`);
     } catch (error) {
         console.error('Error in updateApiStatus:', error);
         throw error;
@@ -57,7 +57,7 @@ async function storeApiLog(externalShipmentId, apiName, requestPayload, response
             },
         };
         await dynamoDB.put(params).promise();
-        console.info('ApiLog stored:', get(params, "Item"));
+        console.info(`ApiLog stored for ${apiName}`);
     } catch (error) {
         console.error('Error in storeApiLog:', error);
         throw error;

@@ -12,6 +12,10 @@ async function ShipEnginePayload(xmlData) {
         if (!get(xmnlObj, "UniversalShipment")) {
             throw new Error('Invalid XML format or missing UniversalShipment element.');
         }
+        const addressResidentialIndicator = get(xmnlObj, 'UniversalShipment.Shipment.OrganizationAddressCollection.OrganizationAddress[1].IsResidential', '');
+
+        // Check if the value is falsy, then set to 'no'
+        const addressResidentialValue = addressResidentialIndicator ? 'no' : addressResidentialIndicator;
 
         const transportCompany = get(xmnlObj, 'UniversalShipment.Shipment.OrganizationAddressCollection.OrganizationAddress[0].OrganizationCode', '');
         const serviceLevel = get(xmnlObj, 'UniversalShipment.Shipment.CarrierServiceLevel.Code', '');
@@ -48,7 +52,7 @@ async function ShipEnginePayload(xmlData) {
                     company_name: get(xmnlObj, 'UniversalShipment.Shipment.OrganizationAddressCollection.OrganizationAddress[1].CompanyName', ''),
                     name: get(xmnlObj, 'UniversalShipment.Shipment.OrganizationAddressCollection.OrganizationAddress[1].Contact', ''),
                     country_code: get(xmnlObj, 'UniversalShipment.Shipment.OrganizationAddressCollection.OrganizationAddress[1].Country.Code', ''),
-                    address_residential_indicator: get(xmnlObj, 'UniversalShipment.Shipment.OrganizationAddressCollection.OrganizationAddress[1].IsResidential', 'no'),
+                    address_residential_indicator: addressResidentialValue,
                     phone: get(xmnlObj, 'UniversalShipment.Shipment.OrganizationAddressCollection.OrganizationAddress[1].Phone', ''),
                     postal_code: get(xmnlObj, 'UniversalShipment.Shipment.OrganizationAddressCollection.OrganizationAddress[1].Postcode', ''),
                     state_province: get(xmnlObj, 'UniversalShipment.Shipment.OrganizationAddressCollection.OrganizationAddress[1].State._', ''),
@@ -70,6 +74,7 @@ async function ShipEnginePayload(xmlData) {
                 })),
             },
         };
+        console.log(JSON.stringify(Payload));
         return Payload;
     } catch (error) {
         console.error('Error in ShipEnginePayload:', error.message);
