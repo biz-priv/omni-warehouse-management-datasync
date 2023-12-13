@@ -7,7 +7,8 @@ const sns = new AWS.SNS();
 async function ShipEnginePayload(xmlData) {
     try {
         const parser = new xml2js.Parser({ explicitArray: false, mergeAttrs: true });
-        const xmnlObj = await parser.parseStringPromise(xmlData);
+        let xmnlObj = await parser.parseStringPromise(xmlData);
+        xmnlObj = get(xmnlObj, "UniversalInterchange.Body")
 
         if (!get(xmnlObj, "UniversalShipment")) {
             throw new Error('Invalid XML format or missing UniversalShipment element.');
@@ -81,6 +82,8 @@ async function ShipEnginePayload(xmlData) {
         throw error;
     }
 }
+
+console.log(ShipEnginePayload(xml))
 
 const getConfirmation = (obj, path) => {
     const isSignatureRequired = get(obj, path);
