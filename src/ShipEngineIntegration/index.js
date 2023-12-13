@@ -6,6 +6,7 @@ const { updateApiStatus, insertApiStatus } = require("./dynamo")
 const { getS3Object, makeAndStoreApiCall } = require("./requestor")
 
 module.exports.handler = async (event, context) => {
+  console.info(`🙂 -> file: index.js:9 -> event:`, JSON.stringify(event));
   let apiStatusId;
   let externalShipmentId;
   let shipmentNumber;

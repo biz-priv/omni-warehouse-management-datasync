@@ -58,9 +58,11 @@ async function makeApiRequest(apiName, payload) {
                 'Authorization': authorizationHeader,
             };
         }
-        console.log("ApiEndpoint:", ApiEndpoint, "ApiHeaders:", ApiHeaders);
+        console.info(`🙂 -> file: requestor.js:56 -> ${apiName} -> ApiEndpoint:`, ApiEndpoint);
+        console.info(`🙂 -> file: requestor.js:58 -> ${apiName} -> ApiHeaders:`, ApiHeaders);
+        console.info(`🙂 -> file: requestor.js:63 -> ${apiName} -> payload:`, payload);
         const response = await axios.post(ApiEndpoint, payload, { headers: ApiHeaders });
-
+        console.info(`🙂 -> file: requestor.js:65 -> response:`, get(response, "data"));
         if (response.data?.Status === 'ERR') {
             console.log(`ShipEngine API error: ${response.data.ProcessingLog}`);
             throw new Error(`ShipEngine API error: ${response.data.ProcessingLog}`);
