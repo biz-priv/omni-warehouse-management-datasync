@@ -83,8 +83,6 @@ async function ShipEnginePayload(xmlData) {
     }
 }
 
-console.log(ShipEnginePayload(xml))
-
 const getConfirmation = (obj, path) => {
     const isSignatureRequired = get(obj, path);
     return isSignatureRequired === 'true' ? 'signature' : 'delivery';
