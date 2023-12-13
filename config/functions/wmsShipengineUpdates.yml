@@ -32,5 +32,6 @@ function:
         events: 
           - s3:ObjectCreated:*
         rules:
-          - prefix: ${ssm:/wms-shipengine/${self:provider.stage}/file/prefix}
+          - prefix: "CargoWiseOutbound/TRXELPTS2_SPE_PKC_"
+          # - prefix: ${ssm:/wms-shipengine/${self:provider.stage}/file/prefix}
           - suffix: ${ssm:/wms-shipengine/${self:provider.stage}/file/suffix}
