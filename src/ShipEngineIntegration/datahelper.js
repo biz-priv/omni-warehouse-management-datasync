@@ -50,7 +50,7 @@ async function ShipEnginePayload(xmlData) {
                     name: get(orderLine, "Product.Description", ""),
                     quantity: parseFloat(get(orderLine, "QuantityMet", 0)),
                 })),
-                service_code: serviceCode,
+                service_code: serviceCode ?? "",
                 ship_to: {
                     email: get(consigneeAddress, "Email", ""),
                     address_line3: get(consigneeAddress, "AdditionalAddressInformation", ""),
