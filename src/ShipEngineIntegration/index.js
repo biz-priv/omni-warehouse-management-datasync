@@ -25,11 +25,11 @@ module.exports.handler = async (event, context) => {
         // Insert into ApiStatusTable with status "Processing"
         await insertApiStatus(apiStatusId, "PROCESSING", externalShipmentId);
 
-        // if (skip) {
-        //   await updateApiStatus(apiStatusId, "StatusUpdate", "SKIPPED", externalShipmentId);
-        //   await updateApiStatus(apiStatusId, "ErrorMessage", "Valid service level not present.", externalShipmentId);
-        //   return "SKIPPED: Valid service level not present.";
-        // }
+        if (skip) {
+          await updateApiStatus(apiStatusId, "StatusUpdate", "SKIPPED", externalShipmentId);
+          await updateApiStatus(apiStatusId, "ErrorMessage", "Valid service level not present.", externalShipmentId);
+          return "SKIPPED: Valid service level not present.";
+        }
         // Make a request to Shipengine API
         const shipengineResponse = await makeAndStoreApiCall("ShipEngine", shipenginePayload, apiStatusId, externalShipmentId);
         // Parse Shipengine API response and construct payloads for Eadapter APIs
