@@ -1,7 +1,7 @@
 const AWS = require("aws-sdk");
 const axios = require("axios");
 const s3 = new AWS.S3();
-const { WMS_ADAPTER_ENDPOINT, WMS_ADAPTER_USERNAME, WMS_ADAPTER_PASSWORD, SHIPENGINE_API_KEY, SHIPENGINE_API_ENDPOINT } = process.env;
+const { WMS_ADAPTER_ENDPOINT, WMS_ADAPTER_USERNAME, WMS_ADAPTER_PASSWORD, SHIPENGINE_API_KEY, SHIPENGINE_API_ENDPOINT, API_STATUS_TABLE } = process.env;
 const { storeApiLog, updateApiStatus } = require("./dynamo");
 const { get } = require("lodash");
 
