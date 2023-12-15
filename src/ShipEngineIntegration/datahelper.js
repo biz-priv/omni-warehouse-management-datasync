@@ -4,7 +4,7 @@ const { get, map } = require("lodash");
 const sns = new AWS.SNS();
 
 
-async function ShipEnginePayload(xmlData) {
+async function createShipEnginePayload(xmlData) {
     try {
         const parser = new xml2js.Parser({ explicitArray: false, mergeAttrs: true });
         let xmnlObj = await parser.parseStringPromise(xmlData);
@@ -17,7 +17,7 @@ async function ShipEnginePayload(xmlData) {
 
         const consigneeAddress = get(xmnlObj, "UniversalShipment.Shipment.OrganizationAddressCollection.OrganizationAddress", []).filter((add) => get(add, "AddressType") === "ConsigneeAddress")[0];
         console.info(`🙂 -> file: datahelper.js:673 -> consigneeAddress:`, consigneeAddress);
-        const addressResidentialIndicator = get(consigneeAddress, "IsResidential", false) === false || get(consigneeAddress, "IsResidential", "false") === "false" ? "no" : "yes";
+        const addressResidentialIndicator = !get(consigneeAddress, "IsResidential", false) || get(consigneeAddress, "IsResidential", "false") === "false" ? "no" : "yes";
         console.info(`🙂 -> file: datahelper.js:675 -> addressResidentialIndicator:`, addressResidentialIndicator);
 
         const transportCompanyDocumentaryAddress = get(xmnlObj, "UniversalShipment.Shipment.OrganizationAddressCollection.OrganizationAddress", []).filter((add) => get(add, "AddressType") === "TransportCompanyDocumentaryAddress")[0];
@@ -42,7 +42,7 @@ async function ShipEnginePayload(xmlData) {
                     address_residential_indicator: "no",
                 },
                 external_shipment_id: get(xmnlObj, "UniversalShipment.Shipment.DataContext.DataSourceCollection.DataSource.Key", ""),
-                confirmation: getConfirmation(xmnlObj, "UniversalShipment.Shipment.IsSignatureRequired"),
+                confirmation: getIfSignRequired(xmnlObj, "UniversalShipment.Shipment.IsSignatureRequired"),
                 shipment_number: get(xmnlObj, "UniversalShipment.Shipment.Order.OrderNumber", ""),
                 external_order_id: get(xmnlObj, "UniversalShipment.Shipment.Order.ClientReference", ""),
                 items: map(get(xmnlObj, "UniversalShipment.Shipment.Order.OrderLineCollection.OrderLine", []), (orderLine) => ({
@@ -85,12 +85,12 @@ async function ShipEnginePayload(xmlData) {
         console.log(JSON.stringify(Payload));
         return { shipenginePayload: Payload, skip: !serviceCode };
     } catch (error) {
-        console.error("Error in ShipEnginePayload:", error.message);
+        console.error("Error in createShipEnginePayload:", error.message);
         throw error;
     }
 }
 
-const getConfirmation = (obj, path) => {
+const getIfSignRequired = (obj, path) => {
     const isSignatureRequired = get(obj, path);
     return isSignatureRequired === "true" ? "signature" : "delivery";
 };
@@ -211,4 +211,4 @@ async function sendSNSNotification(subject, message) {
     }
 }
 
-module.exports = { ShipEnginePayload, labelEventPayload, trackingShipmentPayload, sendSNSNotification };
+module.exports = { createShipEnginePayload, labelEventPayload, trackingShipmentPayload, sendSNSNotification };

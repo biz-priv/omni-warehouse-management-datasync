@@ -1,8 +1,7 @@
-const AWS = require('aws-sdk');
+const AWS = require("aws-sdk");
 const momentTZ = require("moment-timezone");
 const dynamoDB = new AWS.DynamoDB.DocumentClient();
 const { API_STATUS_TABLE, API_LOG_TABLE } = process.env;
-const { get } = require('lodash');
 
 const InsertedTimeStamp = momentTZ.tz("America/Chicago").format("YYYY:MM:DD HH:mm:ss").toString();
 
@@ -14,31 +13,41 @@ async function insertApiStatus(apiStatusId, status, externalShipmentId) {
                 ShipmentId: externalShipmentId,
                 ApiStatusId: apiStatusId,
                 StatusUpdate: status,
-                InsertedTimeStamp
+                InsertedTimeStamp,
             },
         };
         await dynamoDB.put(params).promise();
         console.info(`Inserted API status ShipEngine ${status}`);
     } catch (error) {
-        console.error('Error in insertApiStatus:', error);
+        console.error("Error in insertApiStatus:", error);
         throw error;
     }
 }
 
-async function updateApiStatus(apiStatusId, attributeName, attributeValue, externalShipmentId) {
+async function updateApiStatus({ attributeName, attributeValue, externalShipmentId }) {
     try {
         const params = {
             TableName: API_STATUS_TABLE,
             Key: { ShipmentId: externalShipmentId },
             UpdateExpression: `SET ${attributeName} = :value`,
             ExpressionAttributeValues: {
-                ':value': attributeValue,
+                ":value": attributeValue,
             },
         };
         await dynamoDB.update(params).promise();
-        console.info(`ApiStatus stored for ${attributeName}`);
+        console.info(`ApiStatus updated for ${attributeName}`);
     } catch (error) {
-        console.error('Error in updateApiStatus:', error);
+        console.error("Error in updateApiStatus:", error);
+        throw error;
+    }
+}
+
+async function updateDynamo(params) {
+    try {
+        await dynamoDB.update(params).promise();
+        console.info(`ApiStatus updated.`);
+    } catch (error) {
+        console.error("Error in updateDynamo:", error);
         throw error;
     }
 }
@@ -59,9 +68,9 @@ async function storeApiLog(externalShipmentId, apiName, requestPayload, response
         await dynamoDB.put(params).promise();
         console.info(`ApiLog stored for ${apiName}`);
     } catch (error) {
-        console.error('Error in storeApiLog:', error);
+        console.error("Error in storeApiLog:", error);
         throw error;
     }
 }
 
-module.exports = { updateApiStatus, storeApiLog, insertApiStatus };
+module.exports = { updateApiStatus, storeApiLog, insertApiStatus, updateDynamo };

@@ -1,19 +1,19 @@
-const AWS = require('aws-sdk');
-const axios = require('axios');
+const AWS = require("aws-sdk");
+const axios = require("axios");
 const s3 = new AWS.S3();
 const { WMS_ADAPTER_ENDPOINT, WMS_ADAPTER_USERNAME, WMS_ADAPTER_PASSWORD, SHIPENGINE_API_KEY, SHIPENGINE_API_ENDPOINT } = process.env;
 const { storeApiLog, updateApiStatus } = require("./dynamo");
-const { get } = require('lodash');
+const { get } = require("lodash");
 
 async function makeAndStoreApiCall(apiName, payload, apiStatusId, externalShipmentId) {
     try {
         const response = await makeApiRequest(apiName, payload);
 
         await storeApiLog(externalShipmentId, apiName, payload, response, apiStatusId);
-        await updateApiStatus(apiStatusId, `${apiName}Status`, 'Success', externalShipmentId);
+        await updateApiStatus({ apiStatusId, attributeName: `${apiName}Status`, attributeValue: "Success", externalShipmentId });
 
         // Conditionally return the response for ShipEngine API
-        return apiName === 'ShipEngine' ? response : undefined;
+        return apiName === "ShipEngine" ? response : undefined;
     } catch (error) {
         await handleApiError(apiName, error, apiStatusId, externalShipmentId);
     }
@@ -21,8 +21,16 @@ async function makeAndStoreApiCall(apiName, payload, apiStatusId, externalShipme
 
 async function handleApiError(apiName, error, apiStatusId, externalShipmentId) {
     console.error(`Error in ${apiName} API call: ${error.message}`);
-    await updateApiStatus(apiStatusId, `${apiName}Status`, 'failure', externalShipmentId);
-    await updateApiStatus(apiStatusId, 'ErrorMessage', error.message, externalShipmentId);
+    const params = {
+        TableName: API_STATUS_TABLE,
+        Key: { ShipmentId: externalShipmentId },
+        UpdateExpression: `SET ${apiName}Status = :StatusUpdate, ErrorMessage = :ErrorMessage`,
+        ExpressionAttributeValues: {
+            ":StatusUpdate": "FAILED",
+            ":ErrorMessage": error.message,
+        },
+    };
+    await updateDynamo(params);
     throw new Error(`Error in ${apiName} API call: ${error.message}`);
 }
 
@@ -32,7 +40,7 @@ async function getS3Object(bucket, key) {
         const response = await s3.getObject(params).promise();
         return response.Body.toString();
     } catch (error) {
-        throw new Error(`S3 error: ${error}`)
+        throw new Error(`S3 error: ${error}`);
     }
 }
 
@@ -41,11 +49,11 @@ async function makeApiRequest(apiName, payload) {
         let ApiEndpoint;
         let ApiHeaders;
 
-        if (apiName === 'ShipEngine') {
+        if (apiName === "ShipEngine") {
             ApiEndpoint = SHIPENGINE_API_ENDPOINT;
             ApiHeaders = {
-                'Content-Type': 'application/json',
-                'api-key': SHIPENGINE_API_KEY,
+                "Content-Type": "application/json",
+                "api-key": SHIPENGINE_API_KEY,
             };
         } else {
             const credentials = `${WMS_ADAPTER_USERNAME}:${WMS_ADAPTER_PASSWORD}`;
@@ -54,8 +62,8 @@ async function makeApiRequest(apiName, payload) {
             // WMS_ADAPTER_ENDPOINT env for wms endpoint
             ApiEndpoint = WMS_ADAPTER_ENDPOINT;
             ApiHeaders = {
-                'Content-Type': 'application/xml',
-                'Authorization': authorizationHeader,
+                "Content-Type": "application/xml",
+                Authorization: authorizationHeader,
             };
         }
         console.info(`🙂 -> file: requestor.js:56 -> ${apiName} -> ApiEndpoint:`, ApiEndpoint);
@@ -63,7 +71,7 @@ async function makeApiRequest(apiName, payload) {
         console.info(`🙂 -> file: requestor.js:63 -> ${apiName} -> payload:`, payload);
         const response = await axios.post(ApiEndpoint, payload, { headers: ApiHeaders });
         console.info(`🙂 -> file: requestor.js:65 -> response:`, get(response, "data"));
-        if (response.data?.Status === 'ERR') {
+        if (response.data?.Status === "ERR") {
             console.log(`ShipEngine API error: ${response.data.ProcessingLog}`);
             throw new Error(`ShipEngine API error: ${response.data.ProcessingLog}`);
         }
@@ -73,4 +81,4 @@ async function makeApiRequest(apiName, payload) {
     }
 }
 
-module.exports = { getS3Object, makeAndStoreApiCall }
+module.exports = { getS3Object, makeAndStoreApiCall };

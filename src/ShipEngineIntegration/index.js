@@ -1,8 +1,8 @@
 const AWS = require("aws-sdk");
 const { get } = require("lodash");
 const uuid = require("uuid");
-const { ShipEnginePayload, labelEventPayload, trackingShipmentPayload, sendSNSNotification } = require("./datahelper");
-const { updateApiStatus, insertApiStatus } = require("./dynamo");
+const { createShipEnginePayload, labelEventPayload, trackingShipmentPayload, sendSNSNotification } = require("./datahelper");
+const { updateApiStatus, insertApiStatus, updateDynamo } = require("./dynamo");
 const { getS3Object, makeAndStoreApiCall } = require("./requestor");
 
 module.exports.handler = async (event, context) => {
@@ -18,7 +18,7 @@ module.exports.handler = async (event, context) => {
         // Get XML data from S3
         const xmlData = await getS3Object(s3Bucket, s3Key);
         // Parse XML and construct Shipengine API payload
-        const { shipenginePayload, skip } = await ShipEnginePayload(xmlData);
+        const { shipenginePayload, skip } = await createShipEnginePayload(xmlData);
         // Extract externalShipmentId, shipmentNumber from the payload for correlation
         externalShipmentId = get(shipenginePayload, "shipment.external_shipment_id", "");
         shipmentNumber = get(shipenginePayload, "shipment.shipment_number", "");
@@ -26,9 +26,17 @@ module.exports.handler = async (event, context) => {
         await insertApiStatus(apiStatusId, "PROCESSING", externalShipmentId);
 
         if (skip) {
-          await updateApiStatus(apiStatusId, "StatusUpdate", "SKIPPED", externalShipmentId);
-          await updateApiStatus(apiStatusId, "ErrorMessage", "Valid service level not present.", externalShipmentId);
-          return "SKIPPED: Valid service level not present.";
+            const params = {
+                TableName: API_STATUS_TABLE,
+                Key: { ShipmentId: externalShipmentId },
+                UpdateExpression: `SET StatusUpdate = :StatusUpdate, ErrorMessage = :ErrorMessage`,
+                ExpressionAttributeValues: {
+                    ":StatusUpdate": "SKIPPED",
+                    ":ErrorMessage": "Valid service level not present.",
+                },
+            };
+            await updateDynamo(params);
+            return "SKIPPED: Valid service level not present.";
         }
         // Make a request to Shipengine API
         const shipengineResponse = await makeAndStoreApiCall("ShipEngine", shipenginePayload, apiStatusId, externalShipmentId);
@@ -43,13 +51,21 @@ module.exports.handler = async (event, context) => {
             console.error("Error in CargowiseApiCalls:", error);
         }
         // Update the status to 'Processed' in ApiStatusTable
-        await updateApiStatus(apiStatusId, "StatusUpdate", "PROCESSED", externalShipmentId);
+        await updateApiStatus({ apiStatusId, attributeName: "StatusUpdate", attributeValue: "PROCESSED", externalShipmentId });
         console.info("All the API calls are successful");
     } catch (error) {
         console.error("Error:", error);
         // Update the status to 'failure' and log error message
-        await updateApiStatus(apiStatusId, "StatusUpdate", "FAILED", externalShipmentId);
-        await updateApiStatus(apiStatusId, "ErrorMessage", error.message, externalShipmentId);
+        const params = {
+            TableName: API_STATUS_TABLE,
+            Key: { ShipmentId: externalShipmentId },
+            UpdateExpression: `SET StatusUpdate = :StatusUpdate, ErrorMessage = :ErrorMessage`,
+            ExpressionAttributeValues: {
+                ":StatusUpdate": "FAILED",
+                ":ErrorMessage": error.message,
+            },
+        };
+        await updateDynamo(params);
         // Send SNS notification
         await sendSNSNotification(`Error occurred in Lambda function ${context.functionName}`, error.message);
         throw error;
