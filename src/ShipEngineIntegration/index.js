@@ -4,6 +4,7 @@ const uuid = require("uuid");
 const { createShipEnginePayload, labelEventPayload, trackingShipmentPayload, sendSNSNotification } = require("./datahelper");
 const { updateApiStatus, insertApiStatus, updateDynamo } = require("./dynamo");
 const { getS3Object, makeAndStoreApiCall } = require("./requestor");
+const { API_STATUS_TABLE } = process.env;
 
 module.exports.handler = async (event, context) => {
     console.info(`🙂 -> file: index.js:9 -> event:`, JSON.stringify(event));
