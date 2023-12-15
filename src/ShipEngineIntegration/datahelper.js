@@ -28,6 +28,46 @@ async function createShipEnginePayload(xmlData) {
         console.info(`🙂 -> file: datahelper.js:1019 -> serviceLevel:`, serviceLevel);
         const serviceCode = getServiceCode(transportCompany, serviceLevel);
         console.info(`🙂 -> file: datahelper.js:1021 -> serviceCode:`, serviceCode);
+        let packingLineData = get(xmnlObj, "UniversalShipment.Shipment.PackingLineCollection.PackingLine", {});
+        let packages;
+        if (Array.isArray(packingLineData)) {
+            packages = map(packingLineData, (packingLine) => ({
+                weight: {
+                    value: parseFloat(get(packingLine, "Weight", 0)),
+                    unit: "pound",
+                },
+                dimensions: {
+                    height: parseFloat(get(packingLine, "Height", 0)),
+                    width: parseFloat(get(packingLine, "Width", 0)),
+                    length: parseFloat(get(packingLine, "Length", 0)),
+                    unit: "inch",
+                },
+                label_messages: {
+                    reference1: `${get(xmnlObj, "UniversalShipment.Shipment.Order.OrderNumber", "")},${get(xmnlObj, "UniversalShipment.Shipment.DataContext.DataSourceCollection.DataSource.Key", "")},${get(xmnlObj, "UniversalShipment.Shipment.Order.ClientReference", "")}`,
+                },
+            }));
+        } else if (Object.keys(packingLineData).length > 0) {
+            packages = [
+                {
+                    weight: {
+                        value: parseFloat(get(packingLineData, "Weight", 0)),
+                        unit: "pound",
+                    },
+                    dimensions: {
+                        height: parseFloat(get(packingLineData, "Height", 0)),
+                        width: parseFloat(get(packingLineData, "Width", 0)),
+                        length: parseFloat(get(packingLineData, "Length", 0)),
+                        unit: "inch",
+                    },
+                    label_messages: {
+                        reference1: `${get(xmnlObj, "UniversalShipment.Shipment.Order.OrderNumber", "")},${get(xmnlObj, "UniversalShipment.Shipment.DataContext.DataSourceCollection.DataSource.Key", "")},${get(xmnlObj, "UniversalShipment.Shipment.Order.ClientReference", "")}`,
+                    },
+                },
+            ];
+        } else {
+            packages = [];
+        }
+
         const Payload = {
             label_download_type: "inline",
             shipment: {
@@ -65,21 +105,7 @@ async function createShipEnginePayload(xmlData) {
                     postal_code: get(consigneeAddress, "Postcode", ""),
                     state_province: get(consigneeAddress, "State._", ""),
                 },
-                packages: map(get(xmnlObj, "UniversalShipment.Shipment.PackingLineCollection.PackingLine", []), (packingLine) => ({
-                    weight: {
-                        value: parseFloat(get(packingLine, "Weight", 0)),
-                        unit: "pound",
-                    },
-                    dimensions: {
-                        height: parseFloat(get(packingLine, "Height", 0)),
-                        width: parseFloat(get(packingLine, "Width", 0)),
-                        length: parseFloat(get(packingLine, "Length", 0)),
-                        unit: "inch",
-                    },
-                    label_messages: {
-                        reference1: `${get(xmnlObj, "UniversalShipment.Shipment.Order.OrderNumber", "")},${get(xmnlObj, "UniversalShipment.Shipment.DataContext.DataSourceCollection.DataSource.Key", "")},${get(xmnlObj, "UniversalShipment.Shipment.Order.ClientReference", "")}`,
-                    },
-                })),
+                packages: packages,
             },
         };
         console.log(JSON.stringify(Payload));
