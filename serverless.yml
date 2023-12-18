@@ -1,0 +1,37 @@
+service: omni-wms-datasync
+
+provider:
+  name: aws
+  runtime: nodejs16.x 
+  region: ${opt:region, 'us-east-1'}
+  stage: ${opt:stage, 'dev'}
+  memorySize: 512
+  timeout: 30
+  role: ${ssm:/omni-dw/${self:provider.stage}/lambda/role}
+  stackTags:
+    Application: Omni Warehouse Management Data Sync
+    CreateBy: BizCloudExperts
+    Environment: ${self:provider.stage}
+
+
+package:
+  individually: true
+
+layers:
+  WmsShipengineLibs:
+    path: lambdaLayer/lib
+    compatibleRuntimes:
+      - nodejs16.x
+    name: omni-wms-datasync-layer-${self:provider.stage}
+
+functions:
+  wmsshipengineupdates: ${file(config/functions/wmsShipengineUpdates.yml):function}
+
+resources:
+  Resources:
+    ApiLogTable: ${file(config/dynamoDB/ApiLogTable.yml):ApiLogTable}
+    ApiStatusTable: ${file(config/dynamoDB/ApiStatusTable.yml):ApiStatusTable}
+
+plugins:
+  - serverless-offline
+  - serverless-plugin-existing-s3
