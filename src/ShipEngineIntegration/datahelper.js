@@ -3,7 +3,6 @@ const xml2js = require("xml2js");
 const { get, map } = require("lodash");
 const sns = new AWS.SNS();
 
-
 async function createShipEnginePayload(xmlData) {
     try {
         const parser = new xml2js.Parser({ explicitArray: false, mergeAttrs: true });
@@ -211,6 +210,40 @@ function trackingShipmentPayload(data, shipment_id, OrderNumber) {
                     Order: {
                         OrderNumber: OrderNumber,
                         TransportReference: data.tracking_number,
+                    },
+                },
+            },
+        };
+        return builder.buildObject(xmlData);
+    } catch (error) {
+        console.error("Error in trackingShipmentPayload:", error);
+        throw error;
+    }
+}
+
+function errorMessagePayload(shipment_id, error) {
+    try {
+        const builder = new xml2js.Builder({
+            headless: true,
+            renderOpts: { pretty: true, indent: "    " },
+        });
+
+        const xmlData = {
+            UniversalShipment: {
+                $: { "xmlns:ns0": "http://www.cargowise.com/Schemas/Universal/2011/11" },
+                Shipment: {
+                    $: { xmlns: "http://www.cargowise.com/Schemas/Universal/2011/11" },
+                    DataContext: {
+                        DataTargetCollection: {
+                            DataTarget: {
+                                Type: "WarehouseOrder",
+                                Key: shipment_id,
+                            },
+                        },
+                    },
+                    NoteCollection: {
+                        $: { Content: "Partial" },
+                        Note: { Description: "Internal Work Notes", IsCustomDescription: false, NoteText: JSON.stringify(error), NoteContext: { Code: "AAA" }, Visibility: { Code: "INT" } },
                     },
                 },
             },
