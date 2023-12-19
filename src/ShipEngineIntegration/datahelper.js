@@ -270,4 +270,4 @@ async function sendSNSNotification(subject, message) {
     }
 }
 
-module.exports = { createShipEnginePayload, labelEventPayload, trackingShipmentPayload, sendSNSNotification };
+module.exports = { createShipEnginePayload, labelEventPayload, trackingShipmentPayload, sendSNSNotification, errorMessagePayload };

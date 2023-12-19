@@ -4,6 +4,7 @@ const s3 = new AWS.S3();
 const { WMS_ADAPTER_ENDPOINT, WMS_ADAPTER_USERNAME, WMS_ADAPTER_PASSWORD, SHIPENGINE_API_KEY, SHIPENGINE_API_ENDPOINT, API_STATUS_TABLE } = process.env;
 const { storeApiLog, updateApiStatus, updateDynamo } = require("./dynamo");
 const { get } = require("lodash");
+const { errorMessagePayload } = require("./datahelper");
 
 let shipmentId;
 async function makeAndStoreApiCall(apiName, payload, apiStatusId, externalShipmentId) {
