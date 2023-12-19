@@ -129,16 +129,18 @@ const getServiceCode = (transportCompany, serviceLevel) => {
             UPS: "ups_ground",
             GRD: "ups_ground",
             STD: "ups_ground",
+            "<EMPTY>": "ups_ground",
         },
         DHLWORIAH: {
             STD: "UNKNOWN",
         },
         FEDEXMEM: {
             STD: "fedex_ground",
+            "<EMPTY>": "fedex_ground",
         },
     };
 
-    return serviceCodeMappings[transportCompany]?.[serviceLevel] ?? false;
+    return serviceCodeMappings[transportCompany]?.[serviceLevel === "" ? "<EMPTY>" : serviceLevel] ?? false;
 };
 
 function labelEventPayload(data, shipment_id) {
