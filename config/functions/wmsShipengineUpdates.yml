@@ -27,10 +27,10 @@ function:
       - ${ssm:/omni-dw/${self:provider.stage}/wms/asn/receipt/subnetA}
 
   events:
-    - existingS3:
+    - s3:
         bucket: ${ssm:/omni-dw/${self:provider.stage}/wms/bucket/name}
-        events: 
-          - s3:ObjectCreated:*
+        event: s3:ObjectCreated:*
         rules:
           - prefix: ${ssm:/wms-shipengine/${self:provider.stage}/file/prefix}
           - suffix: ${ssm:/wms-shipengine/${self:provider.stage}/file/suffix}
+        existing: true
