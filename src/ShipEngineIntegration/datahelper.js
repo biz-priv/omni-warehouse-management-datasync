@@ -1,6 +1,6 @@
 const AWS = require("aws-sdk");
 const xml2js = require("xml2js");
-const { get, map } = require("lodash");
+const { get, map, set } = require("lodash");
 const sns = new AWS.SNS();
 
 async function createShipEnginePayload(xmlData) {
@@ -107,6 +107,11 @@ async function createShipEnginePayload(xmlData) {
                 packages: packages,
             },
         };
+        const carrierId = getCarrierId(transportCompany)
+        console.info(`🙂 -> file: datahelper.js:985 -> carrierId:`, carrierId);
+        if(carrierId){
+            set(Payload, "shipment.carrier_id", carrierId)
+        }
         console.log(JSON.stringify(Payload));
         return { shipenginePayload: Payload, skip: !serviceCode };
     } catch (error) {
@@ -141,6 +146,11 @@ const getServiceCode = (transportCompany, serviceLevel) => {
     };
 
     return serviceCodeMappings[transportCompany]?.[serviceLevel === "" ? "<EMPTY>" : serviceLevel] ?? false;
+};
+
+const getCarrierId = (transportCompany) => {
+    const carrierIds = { UPSAIR: "se-5840017" };
+    return get(carrierIds, transportCompany, false);
 };
 
 function labelEventPayload(data, shipment_id) {
