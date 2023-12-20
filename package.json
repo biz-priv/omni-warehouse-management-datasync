@@ -17,8 +17,7 @@
     "xml2js": "^0.6.2"
   },
   "devDependencies": {
-    "serverless": "2.72.3",
-    "serverless-offline": "^8.8.0",
-    "serverless-plugin-existing-s3": "^2.4.0"
+    "serverless": "3.38.0",
+    "serverless-offline": "^8.8.0"
   }
 }
