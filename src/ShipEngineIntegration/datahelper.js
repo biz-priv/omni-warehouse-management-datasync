@@ -72,7 +72,7 @@ async function createShipEnginePayload(xmlData) {
             shipment: {
                 ship_from: {
                     name: "Omni Logistics",
-                    phone: "650-555-1212",
+                    phone: "856-579-7710",
                     address_line1: "970 Harding Highway, Suite 200",
                     city_locality: "Penns Grove",
                     state_province: "NJ",
