@@ -1,0 +1,20 @@
+ApiStatusTable:
+  Type: AWS::DynamoDB::Table
+  Properties:
+    TableName: omni-wms-shipengine-api-status-${self:provider.stage}
+    BillingMode: PAY_PER_REQUEST
+    AttributeDefinitions:
+      - AttributeName: ShipmentId
+        AttributeType: S
+      - AttributeName: ApiStatusId
+        AttributeType: S        
+    KeySchema:
+      - AttributeName: ShipmentId
+        KeyType: HASH
+    GlobalSecondaryIndexes:
+      - IndexName: "ApiStatusId-index"
+        KeySchema:
+          - AttributeName: "ApiStatusId"
+            KeyType: HASH
+        Projection:
+          ProjectionType: 'ALL'        
