@@ -255,7 +255,7 @@ function errorMessagePayload(shipment_id, error) {
                     },
                     NoteCollection: {
                         $: { Content: "Partial" },
-                        Note: { Description: "Internal Work Notes", IsCustomDescription: false, NoteText: JSON.stringify(error, null, 2) + "\n", NoteContext: { Code: "AAA" }, Visibility: { Code: "INT" } },
+                        Note: { Description: "Internal Work Notes", IsCustomDescription: false, NoteText: JSON.stringify(error), NoteContext: { Code: "AAA" }, Visibility: { Code: "INT" } },
                     },
                 },
             },
