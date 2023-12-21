@@ -1,4 +1,5 @@
 const AWS = require("aws-sdk");
+const { unset } = require("lodash");
 const momentTZ = require("moment-timezone");
 const dynamoDB = new AWS.DynamoDB.DocumentClient();
 const { API_STATUS_TABLE, API_LOG_TABLE } = process.env;
@@ -54,13 +55,18 @@ async function updateDynamo(params) {
 
 async function storeApiLog(externalShipmentId, apiName, requestPayload, responsePayload, apiStatusId) {
     try {
+        const newObj = { ...responsePayload}
+        if (apiName === "ShipEngine") {
+            unset(newObj, "label_download");
+            unset(newObj, "packages");
+        }
         const params = {
             TableName: API_LOG_TABLE,
             Item: {
                 ShipmentId: externalShipmentId,
                 ApiName: apiName,
                 RequestPayload: requestPayload,
-                ResponsePayload: responsePayload,
+                ResponsePayload: newObj,
                 InsertedTimeStamp,
                 ApiStatusId: apiStatusId,
             },
