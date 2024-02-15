@@ -98,7 +98,7 @@ async function createShipEnginePayload(xmlData) {
                     city_locality: get(consigneeAddress, "City", ""),
                     company_name: get(consigneeAddress, "CompanyName", ""),
                     name: get(consigneeAddress, "Contact", ""),
-                    country_code: get(consigneeAddress, "Country.Code", ""),
+                    country_code: getCountryCode(transportCompany,get(consigneeAddress, "Country.Code", "")),
                     address_residential_indicator: addressResidentialIndicator,
                     phone: get(consigneeAddress, "Phone", ""),
                     postal_code: get(consigneeAddress, "Postcode", ""),
@@ -264,6 +264,15 @@ function errorMessagePayload(shipment_id, error) {
     } catch (error) {
         console.error("Error in trackingShipmentPayload:", error);
         throw error;
+    }
+}
+
+function getCountryCode(transportCompany,CountryCode){
+    if(transportCompany === "USPS"){
+        return "US"
+    }
+    else {
+        return CountryCode
     }
 }
 
