@@ -98,7 +98,7 @@ async function createShipEnginePayload(xmlData) {
                     city_locality: get(consigneeAddress, "City", ""),
                     company_name: get(consigneeAddress, "CompanyName", ""),
                     name: get(consigneeAddress, "Contact", ""),
-                    country_code: getCountryCode(transportCompany,get(consigneeAddress, "Country.Code", "")),
+                    country_code: getCountryCode(transportCompany,get(consigneeAddress, "Country.Code", ""), get(consigneeAddress, "State._", "")),
                     address_residential_indicator: addressResidentialIndicator,
                     phone: get(consigneeAddress, "Phone", ""),
                     postal_code: get(consigneeAddress, "Postcode", ""),
@@ -267,13 +267,17 @@ function errorMessagePayload(shipment_id, error) {
     }
 }
 
-function getCountryCode(transportCompany,CountryCode){
-    if(transportCompany === "USPS"){
+let StateProvinces = ["AS", "GU", "MP", "FM", "PR", "VI"];
+function getCountryCode(transportCompany,CountryCode,StateProvince){
+    if((transportCompany === "UPSAIR" || transportCompany === "FEDEXMEM") && (StateProvinces.includes(StateProvince))){
+        return StateProvince
+    }
+    if((transportCompany === "USPS") && (StateProvinces.includes(StateProvince))){
+        console.log("USPS..................................")
         return "US"
     }
-    else {
+        console.log("CountryCode..................................")
         return CountryCode
-    }
 }
 
 async function sendSNSNotification(subject, message) {
