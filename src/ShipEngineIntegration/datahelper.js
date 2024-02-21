@@ -67,6 +67,25 @@ async function createShipEnginePayload(xmlData) {
             packages = [];
         }
 
+        const orderLine = get(xmnlObj, "UniversalShipment.Shipment.Order.OrderLineCollection.OrderLine", []);
+        let items;
+        if (Array.isArray(orderLine)) {
+            items = map(get(xmnlObj, "UniversalShipment.Shipment.Order.OrderLineCollection.OrderLine", []), (orderLine) => ({
+                sku: get(orderLine, "Product.Code", ""),
+                name: get(orderLine, "Product.Description", ""),
+                quantity: parseFloat(get(orderLine, "QuantityMet", 0)),
+            }))
+        } else if (Object.keys(packingLineData).length > 0) {
+            items = [
+                {
+                    sku: get(orderLine, "Product.Code", ""),
+                    name: get(orderLine, "Product.Description", ""),
+                    quantity: parseFloat(get(orderLine, "QuantityMet", 0)),
+                }
+            ]
+        } else {
+            items = [];
+        }
         const Payload = {
             label_download_type: "inline",
             shipment: {
@@ -84,11 +103,7 @@ async function createShipEnginePayload(xmlData) {
                 confirmation: getIfSignRequired(xmnlObj, "UniversalShipment.Shipment.IsSignatureRequired"),
                 shipment_number: get(xmnlObj, "UniversalShipment.Shipment.Order.OrderNumber", ""),
                 external_order_id: get(xmnlObj, "UniversalShipment.Shipment.Order.ClientReference", ""),
-                items: map(get(xmnlObj, "UniversalShipment.Shipment.Order.OrderLineCollection.OrderLine", []), (orderLine) => ({
-                    sku: get(orderLine, "Product.Code", ""),
-                    name: get(orderLine, "Product.Description", ""),
-                    quantity: parseFloat(get(orderLine, "QuantityMet", 0)),
-                })),
+                items,
                 service_code: serviceCode ?? "",
                 ship_to: {
                     email: get(consigneeAddress, "Email", ""),
