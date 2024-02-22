@@ -99,7 +99,7 @@ async function createShipEnginePayload(xmlData) {
                     country_code: "US",
                     address_residential_indicator: "no",
                 },
-                external_shipment_id: get(xmnlObj, "UniversalShipment.Shipment.DataContext.DataSourceCollection.DataSource.Key", ""),
+                //external_shipment_id: get(xmnlObj, "UniversalShipment.Shipment.DataContext.DataSourceCollection.DataSource.Key", ""),
                 confirmation: getIfSignRequired(xmnlObj, "UniversalShipment.Shipment.IsSignatureRequired"),
                 shipment_number: get(xmnlObj, "UniversalShipment.Shipment.Order.OrderNumber", ""),
                 external_order_id: get(xmnlObj, "UniversalShipment.Shipment.Order.ClientReference", ""),
@@ -130,7 +130,7 @@ async function createShipEnginePayload(xmlData) {
             set(Payload, "shipment.carrier_id", carrierId)
         }
         console.log(JSON.stringify(Payload));
-        return { shipenginePayload: Payload, skip: !serviceCode };
+        return { shipenginePayload: Payload, skip: !serviceCode , external_shipment_id: get(xmnlObj, "UniversalShipment.Shipment.DataContext.DataSourceCollection.DataSource.Key", "")};
     } catch (error) {
         console.error("Error in createShipEnginePayload:", error.message);
         throw error;
