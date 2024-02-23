@@ -146,7 +146,7 @@ const getServiceCode = (transportCompany, serviceLevel) => {
     const serviceCodeMappings = {
         UPSAIR: {
             U1D: "ups_next_day_air_saver",
-            U2D: "ups_2nd_day_air",
+            UTD: "ups_2nd_day_air",
             U3D: "ups_3_day_select",
             UPS: "ups_ground",
             GRD: "ups_ground",
