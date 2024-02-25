@@ -122,8 +122,6 @@ async function createShipEnginePayload(xmlData) {
                 packages: packages,
             },
         };
-        console.log("1:",get(xmnlObj, "UniversalShipment.Shipment.Order.OrderLineCollection.OrderLine", []));
-        console.log("2:",get(xmnlObj, "UniversalShipment.Shipment.Order.OrderLineCollection", []));
         const carrierId = getCarrierId(transportCompany)
         console.info(`🙂 -> file: datahelper.js:985 -> carrierId:`, carrierId);
         if(carrierId){
