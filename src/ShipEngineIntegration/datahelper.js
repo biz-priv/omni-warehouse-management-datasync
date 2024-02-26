@@ -67,6 +67,25 @@ async function createShipEnginePayload(xmlData) {
             packages = [];
         }
 
+        const orderLine = get(xmnlObj, "UniversalShipment.Shipment.Order.OrderLineCollection.OrderLine", []);
+        let items;
+        if (Array.isArray(orderLine)) {
+            items = map(get(xmnlObj, "UniversalShipment.Shipment.Order.OrderLineCollection.OrderLine", []), (orderLine) => ({
+                sku: get(orderLine, "Product.Code", ""),
+                name: get(orderLine, "Product.Description", ""),
+                quantity: parseFloat(get(orderLine, "QuantityMet", 0)),
+            }))
+        } else if (Object.keys(packingLineData).length > 0) {
+            items = [
+                {
+                    sku: get(orderLine, "Product.Code", ""),
+                    name: get(orderLine, "Product.Description", ""),
+                    quantity: parseFloat(get(orderLine, "QuantityMet", 0)),
+                }
+            ]
+        } else {
+            items = [];
+        }
         const Payload = {
             label_download_type: "inline",
             shipment: {
@@ -84,11 +103,7 @@ async function createShipEnginePayload(xmlData) {
                 confirmation: getIfSignRequired(xmnlObj, "UniversalShipment.Shipment.IsSignatureRequired"),
                 shipment_number: get(xmnlObj, "UniversalShipment.Shipment.Order.OrderNumber", ""),
                 external_order_id: get(xmnlObj, "UniversalShipment.Shipment.Order.ClientReference", ""),
-                items: map(get(xmnlObj, "UniversalShipment.Shipment.Order.OrderLineCollection.OrderLine", []), (orderLine) => ({
-                    sku: get(orderLine, "Product.Code", ""),
-                    name: get(orderLine, "Product.Description", ""),
-                    quantity: parseFloat(get(orderLine, "QuantityMet", 0)),
-                })),
+                items,
                 service_code: serviceCode ?? "",
                 ship_to: {
                     email: get(consigneeAddress, "Email", ""),
@@ -98,7 +113,7 @@ async function createShipEnginePayload(xmlData) {
                     city_locality: get(consigneeAddress, "City", ""),
                     company_name: get(consigneeAddress, "CompanyName", ""),
                     name: get(consigneeAddress, "Contact", ""),
-                    country_code: get(consigneeAddress, "Country.Code", ""),
+                    country_code: getCountryCode(transportCompany, get(consigneeAddress, "Country.Code", ""), get(consigneeAddress, "State._", "")),
                     address_residential_indicator: addressResidentialIndicator,
                     phone: get(consigneeAddress, "Phone", ""),
                     postal_code: get(consigneeAddress, "Postcode", ""),
@@ -129,7 +144,7 @@ const getServiceCode = (transportCompany, serviceLevel) => {
     const serviceCodeMappings = {
         UPSAIR: {
             U1D: "ups_next_day_air_saver",
-            U2D: "ups_2nd_day_air",
+            UTD: "ups_2nd_day_air",
             U3D: "ups_3_day_select",
             UPS: "ups_ground",
             GRD: "ups_ground",
@@ -265,6 +280,17 @@ function errorMessagePayload(shipment_id, error) {
         console.error("Error in trackingShipmentPayload:", error);
         throw error;
     }
+}
+
+let StateProvinces = ["AS", "GU", "MP", "FM", "PR", "VI"];
+function getCountryCode(transportCompany,CountryCode,StateProvince){
+    if((transportCompany === "UPSAIR" || transportCompany === "FEDEXMEM") && (StateProvinces.includes(StateProvince))){
+        return StateProvince
+    }
+    if((transportCompany === "USPS") && (StateProvinces.includes(StateProvince))){
+        return "US"
+    }
+        return CountryCode
 }
 
 async function sendSNSNotification(subject, message) {
