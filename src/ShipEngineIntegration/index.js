@@ -39,7 +39,7 @@ module.exports.handler = async (event, context) => {
             };
             await updateDynamo(params);
             const skippedSubject = `Skipped processing the file in ${context.functionName}`
-            const skippedMessage = `Hello Team, \n The ${fileName} got skipped. \n Please go through the logs and find why it is skipped. \n  `
+            const skippedMessage = `Hello Team, \n The ${fileName} got skipped. \n This is due to Invalid service level received: ${serviceLevel}. \n Note: the same message is already conveyed to customers.\n  `
             await sendSNSNotification(skippedSubject,skippedMessage);
             await makeApiRequest("ErrorUpload", errorMessagePayload(shipmentId, `Invalid service level received: ${serviceLevel}`));
             console.info("SKIPPED: Valid service level not present.")

@@ -67,8 +67,8 @@ async function storeApiLog(externalShipmentId, apiName, requestPayload, response
             Item: {
                 ShipmentId: externalShipmentId,
                 ApiName: apiName,
-                RequestPayload: apiName === "ShipEngine" ? JSON.stringify(requestPayload) : requestPayload,
-                ResponsePayload: apiName === "ShipEngine" ? JSON.stringify(newObj) : responsePayload,
+                RequestPayload: requestPayload,
+                ResponsePayload: apiName === "ShipEngine" ? newObj : responsePayload,
                 InsertedTimeStamp,
                 ApiStatusId: apiStatusId,
             },
