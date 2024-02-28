@@ -34,6 +34,7 @@ async function handleApiError(apiName, error, apiStatusId, externalShipmentId) {
         },
     };
     await updateDynamo(params);
+    console.log("params in handleApiError function: ",params)
     throw new Error(`Error in ${apiName} API call: ${error.message}`);
 }
 
@@ -88,4 +89,4 @@ async function makeApiRequest(apiName, payload) {
     }
 }
 
-module.exports = { getS3Object, makeAndStoreApiCall };
+module.exports = { getS3Object, makeAndStoreApiCall, makeApiRequest,  };

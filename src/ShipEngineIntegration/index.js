@@ -1,9 +1,9 @@
 const AWS = require("aws-sdk");
 const { get } = require("lodash");
 const uuid = require("uuid");
-const { createShipEnginePayload, labelEventPayload, trackingShipmentPayload, sendSNSNotification } = require("./datahelper");
+const { createShipEnginePayload, labelEventPayload, trackingShipmentPayload, sendSNSNotification, errorMessagePayload } = require("./datahelper");
 const { updateApiStatus, insertApiStatus, updateDynamo } = require("./dynamo");
-const { getS3Object, makeAndStoreApiCall } = require("./requestor");
+const { getS3Object, makeAndStoreApiCall, makeApiRequest } = require("./requestor");
 const { API_STATUS_TABLE } = process.env;
 
 module.exports.handler = async (event, context) => {
@@ -15,11 +15,12 @@ module.exports.handler = async (event, context) => {
         // Extract XML file from S3 event
         const s3Bucket = get(event, "Records[0].s3.bucket.name", "");
         const s3Key = get(event, "Records[0].s3.object.key", "");
+        const fileName = s3Key.split("/").pop();
         apiStatusId = uuid.v4();
         // Get XML data from S3
         const xmlData = await getS3Object(s3Bucket, s3Key);
         // Parse XML and construct Shipengine API payload
-        const { shipenginePayload, skip, external_shipment_id: externalShipmentId } = await createShipEnginePayload(xmlData);
+        const { shipenginePayload, skip, external_shipment_id: externalShipmentId , serviceLevel} = await createShipEnginePayload(xmlData);
         // Extract externalShipmentId, shipmentNumber from the payload for correlation
         //externalShipmentId = get(shipenginePayload, "shipment.external_shipment_id", "");
         shipmentNumber = get(shipenginePayload, "shipment.shipment_number", "");
@@ -37,6 +38,11 @@ module.exports.handler = async (event, context) => {
                 },
             };
             await updateDynamo(params);
+            const skippedSubject = `Skipped processing the file in ${context.functionName}`
+            const skippedMessage = `Hello Team, \n The ${fileName} got skipped. \n Please go through the logs and find why it is skipped. \n  `
+            await sendSNSNotification(skippedSubject,skippedMessage);
+            await makeApiRequest("ErrorUpload", errorMessagePayload(shipmentId, `Invalid service level received: ${serviceLevel}`));
+            console.info("SKIPPED: Valid service level not present.")
             return "SKIPPED: Valid service level not present.";
         }
         // Make a request to Shipengine API

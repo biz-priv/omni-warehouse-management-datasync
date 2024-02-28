@@ -128,7 +128,7 @@ async function createShipEnginePayload(xmlData) {
             set(Payload, "shipment.carrier_id", carrierId)
         }
         console.log(JSON.stringify(Payload));
-        return { shipenginePayload: Payload, skip: !serviceCode , external_shipment_id: get(xmnlObj, "UniversalShipment.Shipment.DataContext.DataSourceCollection.DataSource.Key", "")};
+        return { shipenginePayload: Payload, skip: !serviceCode , external_shipment_id: get(xmnlObj, "UniversalShipment.Shipment.DataContext.DataSourceCollection.DataSource.Key", ""), serviceLevel};
     } catch (error) {
         console.error("Error in createShipEnginePayload:", error.message);
         throw error;
@@ -144,7 +144,7 @@ const getServiceCode = (transportCompany, serviceLevel) => {
     const serviceCodeMappings = {
         UPSAIR: {
             U1D: "ups_next_day_air_saver",
-            UTD: "ups_2nd_day_air",
+            U2D: "ups_2nd_day_air",
             U3D: "ups_3_day_select",
             UPS: "ups_ground",
             GRD: "ups_ground",
