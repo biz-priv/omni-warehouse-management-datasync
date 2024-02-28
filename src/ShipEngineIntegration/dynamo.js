@@ -60,8 +60,6 @@ async function storeApiLog(externalShipmentId, apiName, requestPayload, response
             unset(newObj, "label_download");
             unset(newObj, "packages");
         }
-        console.log("newObj", newObj);
-        console.log("requestPayload", requestPayload);
         const params = {
             TableName: API_LOG_TABLE,
             Item: {

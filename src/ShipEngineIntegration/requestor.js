@@ -34,7 +34,6 @@ async function handleApiError(apiName, error, apiStatusId, externalShipmentId) {
         },
     };
     await updateDynamo(params);
-    console.log("params in handleApiError function: ",params)
     throw new Error(`Error in ${apiName} API call: ${error.message}`);
 }
 
