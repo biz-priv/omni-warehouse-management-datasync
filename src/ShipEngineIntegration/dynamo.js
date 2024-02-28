@@ -55,7 +55,7 @@ async function updateDynamo(params) {
 
 async function storeApiLog(externalShipmentId, apiName, requestPayload, responsePayload, apiStatusId) {
     try {
-        const newObj = { ...responsePayload}
+        const newObj = { ...responsePayload }
         if (apiName === "ShipEngine") {
             unset(newObj, "label_download");
             unset(newObj, "packages");
@@ -66,7 +66,7 @@ async function storeApiLog(externalShipmentId, apiName, requestPayload, response
                 ShipmentId: externalShipmentId,
                 ApiName: apiName,
                 RequestPayload: requestPayload,
-                ResponsePayload: newObj,
+                ResponsePayload: apiName === "ShipEngine" ? newObj : responsePayload,
                 InsertedTimeStamp,
                 ApiStatusId: apiStatusId,
             },

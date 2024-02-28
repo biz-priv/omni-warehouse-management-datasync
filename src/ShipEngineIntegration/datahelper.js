@@ -128,7 +128,7 @@ async function createShipEnginePayload(xmlData) {
             set(Payload, "shipment.carrier_id", carrierId)
         }
         console.log(JSON.stringify(Payload));
-        return { shipenginePayload: Payload, skip: !serviceCode, external_shipment_id: get(xmnlObj, "UniversalShipment.Shipment.DataContext.DataSourceCollection.DataSource.Key", "") };
+        return { shipenginePayload: Payload, skip: !serviceCode , external_shipment_id: get(xmnlObj, "UniversalShipment.Shipment.DataContext.DataSourceCollection.DataSource.Key", ""), serviceLevel};
     } catch (error) {
         console.error("Error in createShipEnginePayload:", error.message);
         throw error;

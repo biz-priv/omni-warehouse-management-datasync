@@ -88,4 +88,4 @@ async function makeApiRequest(apiName, payload) {
     }
 }
 
-module.exports = { getS3Object, makeAndStoreApiCall };
+module.exports = { getS3Object, makeAndStoreApiCall, makeApiRequest,};
