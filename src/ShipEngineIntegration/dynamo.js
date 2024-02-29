@@ -1,5 +1,5 @@
 const AWS = require("aws-sdk");
-const { unset } = require("lodash");
+const { unset, get } = require("lodash");
 const momentTZ = require("moment-timezone");
 const dynamoDB = new AWS.DynamoDB.DocumentClient();
 const { API_STATUS_TABLE, API_LOG_TABLE, CARRIER_SERVICE_LEVEL_MAPPING_TABLE } = process.env;
@@ -85,17 +85,17 @@ async function getServiceCode(transportCompany, serviceLevel) {
         KeyConditionExpression: 'TransportCompany = :tc and ServiceLevel = :sl',
         ExpressionAttributeValues: {
             ':tc': transportCompany,
-            ':sl': serviceLevel
+            ':sl': serviceLevel === "" ? "DEFAULT" : serviceLevel
         }
     };
 
     try {
         const data = await dynamoDB.query(params).promise();
         console.log("getServiceCodeData",data.Items)
-        if (data.Items.length === 0) {
-            return false; 
+        if (get(data,"Items",[]).length === 0) {
+            return false;
         } else {
-            return data.Items.ServiceCode;
+            return get(data,"Items.ServiceCode");
         }
     } catch (error) {
         console.error("Error querying DynamoDB:", error);

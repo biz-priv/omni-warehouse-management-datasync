@@ -26,7 +26,7 @@ async function createShipEnginePayload(xmlData) {
         console.info(`🙂 -> file: datahelper.js:1017 -> transportCompany:`, transportCompany);
         const serviceLevel = get(xmnlObj, "UniversalShipment.Shipment.CarrierServiceLevel.Code", "");
         console.info(`🙂 -> file: datahelper.js:1019 -> serviceLevel:`, serviceLevel);
-        const serviceCode = getServiceCode(transportCompany, serviceLevel);
+        const serviceCode = await getServiceCode(transportCompany, serviceLevel);
         console.info(`🙂 -> file: datahelper.js:1021 -> serviceCode:`, serviceCode);
         let packingLineData = get(xmnlObj, "UniversalShipment.Shipment.PackingLineCollection.PackingLine", {});
         let packages;
