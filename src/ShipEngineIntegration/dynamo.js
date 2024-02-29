@@ -95,7 +95,7 @@ async function getServiceCode(transportCompany, serviceLevel) {
         if (get(data,"Items",[]).length === 0) {
             return false;
         } else {
-            return get(data,"Items.ServiceCode");
+            return get(data,"Items[0].ServiceCode");
         }
     } catch (error) {
         console.error("Error querying DynamoDB:", error);
