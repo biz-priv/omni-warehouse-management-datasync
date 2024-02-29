@@ -2,7 +2,7 @@ const AWS = require("aws-sdk");
 const { unset } = require("lodash");
 const momentTZ = require("moment-timezone");
 const dynamoDB = new AWS.DynamoDB.DocumentClient();
-const { API_STATUS_TABLE, API_LOG_TABLE } = process.env;
+const { API_STATUS_TABLE, API_LOG_TABLE, CARRIER_SERVICE_LEVEL_MAPPING_TABLE } = process.env;
 
 const InsertedTimeStamp = momentTZ.tz("America/Chicago").format("YYYY:MM:DD HH:mm:ss").toString();
 
@@ -79,4 +79,28 @@ async function storeApiLog(externalShipmentId, apiName, requestPayload, response
     }
 }
 
-module.exports = { updateApiStatus, storeApiLog, insertApiStatus, updateDynamo };
+async function getServiceCode(transportCompany, serviceLevel) {
+    const params = {
+        TableName: CARRIER_SERVICE_LEVEL_MAPPING_TABLE,
+        KeyConditionExpression: 'TransportCompany = :tc and ServiceLevel = :sl',
+        ExpressionAttributeValues: {
+            ':tc': transportCompany,
+            ':sl': serviceLevel
+        }
+    };
+
+    try {
+        const data = await dynamoDB.query(params).promise();
+        console.log("getServiceCodeData",data.Items)
+        if (data.Items.length === 0) {
+            return false; 
+        } else {
+            return data.Items.ServiceCode;
+        }
+    } catch (error) {
+        console.error("Error querying DynamoDB:", error);
+        throw error; 
+    }
+}
+
+module.exports = { updateApiStatus, storeApiLog, insertApiStatus, updateDynamo, getServiceCode };

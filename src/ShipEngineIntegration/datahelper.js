@@ -1,6 +1,7 @@
 const AWS = require("aws-sdk");
 const xml2js = require("xml2js");
 const { get, map, set } = require("lodash");
+const { getServiceCode } = require("./dynamo");
 const sns = new AWS.SNS();
 
 async function createShipEnginePayload(xmlData) {
@@ -140,28 +141,28 @@ const getIfSignRequired = (obj, path) => {
     return isSignatureRequired === "true" ? "signature" : "delivery";
 };
 
-const getServiceCode = (transportCompany, serviceLevel) => {
-    const serviceCodeMappings = {
-        UPSAIR: {
-            U1D: "ups_next_day_air_saver",
-            U2D: "ups_2nd_day_air",
-            U3D: "ups_3_day_select",
-            UPS: "ups_ground",
-            GRD: "ups_ground",
-            STD: "ups_ground",
-            "<EMPTY>": "ups_ground",
-        },
-        DHLWORIAH: {
-            STD: "UNKNOWN",
-        },
-        FEDEXMEM: {
-            STD: "fedex_ground",
-            "<EMPTY>": "fedex_ground",
-        },
-    };
+// const getServiceCode = (transportCompany, serviceLevel) => {
+//     const serviceCodeMappings = {
+//         UPSAIR: {
+//             U1D: "ups_next_day_air_saver",
+//             U2D: "ups_2nd_day_air",
+//             U3D: "ups_3_day_select",
+//             UPS: "ups_ground",
+//             GRD: "ups_ground",
+//             STD: "ups_ground",
+//             "<EMPTY>": "ups_ground",
+//         },
+//         DHLWORIAH: {
+//             STD: "UNKNOWN",
+//         },
+//         FEDEXMEM: {
+//             STD: "fedex_ground",
+//             "<EMPTY>": "fedex_ground",
+//         },
+//     };
 
-    return serviceCodeMappings[transportCompany]?.[serviceLevel === "" ? "<EMPTY>" : serviceLevel] ?? false;
-};
+//     return serviceCodeMappings[transportCompany]?.[serviceLevel === "" ? "<EMPTY>" : serviceLevel] ?? false;
+// };
 
 const getCarrierId = (transportCompany) => {
     const carrierIds = { UPSAIR: "se-5840017" };
