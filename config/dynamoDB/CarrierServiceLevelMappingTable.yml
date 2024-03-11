@@ -1,0 +1,15 @@
+CarrierServiceLevelMappingTable:
+  Type: AWS::DynamoDB::Table
+  Properties:
+    TableName: omni-wms-shipengine-carrier-service-level-mapping-${self:provider.stage}
+    BillingMode: PAY_PER_REQUEST
+    AttributeDefinitions:
+      - AttributeName: TransportCompany
+        AttributeType: S
+      - AttributeName: ServiceLevel
+        AttributeType: S        
+    KeySchema:
+      - AttributeName: TransportCompany
+        KeyType: HASH
+      - AttributeName: ServiceLevel
+        KeyType: RANGE

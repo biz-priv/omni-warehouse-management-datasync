@@ -22,7 +22,7 @@ module.exports.handler = async (event, context) => {
         // Parse XML and construct Shipengine API payload
         const { shipenginePayload, skip, external_shipment_id: externalShipmentId , serviceLevel} = await createShipEnginePayload(xmlData);
         // Extract externalShipmentId, shipmentNumber from the payload for correlation
-        // externalShipmentId = get(shipenginePayload, "shipment.external_shipment_id", "");
+        //externalShipmentId = get(shipenginePayload, "shipment.external_shipment_id", "");
         shipmentNumber = get(shipenginePayload, "shipment.shipment_number", "");
         // Insert into ApiStatusTable with status "Processing"
         await insertApiStatus(apiStatusId, "PROCESSING", externalShipmentId);
