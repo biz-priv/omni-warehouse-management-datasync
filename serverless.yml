@@ -31,6 +31,7 @@ resources:
   Resources:
     ApiLogTable: ${file(config/dynamoDB/ApiLogTable.yml):ApiLogTable}
     ApiStatusTable: ${file(config/dynamoDB/ApiStatusTable.yml):ApiStatusTable}
+    CarrierServiceLevelMappingTable: ${file(config/dynamoDB/CarrierServiceLevelMappingTable.yml):CarrierServiceLevelMappingTable}
 
 plugins:
   - serverless-offline
