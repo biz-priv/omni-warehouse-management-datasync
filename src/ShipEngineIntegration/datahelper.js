@@ -1,6 +1,7 @@
 const AWS = require("aws-sdk");
 const xml2js = require("xml2js");
 const { get, map, set } = require("lodash");
+const { getServiceCode } = require("./dynamo");
 const sns = new AWS.SNS();
 
 async function createShipEnginePayload(xmlData) {
@@ -25,7 +26,7 @@ async function createShipEnginePayload(xmlData) {
         console.info(`🙂 -> file: datahelper.js:1017 -> transportCompany:`, transportCompany);
         const serviceLevel = get(xmnlObj, "UniversalShipment.Shipment.CarrierServiceLevel.Code", "");
         console.info(`🙂 -> file: datahelper.js:1019 -> serviceLevel:`, serviceLevel);
-        const serviceCode = getServiceCode(transportCompany, serviceLevel);
+        const serviceCode = await getServiceCode(transportCompany, serviceLevel);
         console.info(`🙂 -> file: datahelper.js:1021 -> serviceCode:`, serviceCode);
         let packingLineData = get(xmnlObj, "UniversalShipment.Shipment.PackingLineCollection.PackingLine", {});
         let packages;
@@ -99,7 +100,7 @@ async function createShipEnginePayload(xmlData) {
                     country_code: "US",
                     address_residential_indicator: "no",
                 },
-                // external_shipment_id: get(xmnlObj, "UniversalShipment.Shipment.DataContext.DataSourceCollection.DataSource.Key", ""),
+                //external_shipment_id: get(xmnlObj, "UniversalShipment.Shipment.DataContext.DataSourceCollection.DataSource.Key", ""),
                 confirmation: getIfSignRequired(xmnlObj, "UniversalShipment.Shipment.IsSignatureRequired"),
                 shipment_number: get(xmnlObj, "UniversalShipment.Shipment.Order.OrderNumber", ""),
                 external_order_id: get(xmnlObj, "UniversalShipment.Shipment.Order.ClientReference", ""),
@@ -113,7 +114,7 @@ async function createShipEnginePayload(xmlData) {
                     city_locality: get(consigneeAddress, "City", ""),
                     company_name: get(consigneeAddress, "CompanyName", ""),
                     name: get(consigneeAddress, "Contact", ""),
-                    country_code: getCountryCode(transportCompany, get(consigneeAddress, "Country.Code", ""), get(consigneeAddress, "State._", "")),
+                    country_code: getCountryCode(transportCompany,get(consigneeAddress, "Country.Code", ""), get(consigneeAddress, "State._", "")),
                     address_residential_indicator: addressResidentialIndicator,
                     phone: get(consigneeAddress, "Phone", ""),
                     postal_code: get(consigneeAddress, "Postcode", ""),
@@ -128,7 +129,7 @@ async function createShipEnginePayload(xmlData) {
             set(Payload, "shipment.carrier_id", carrierId)
         }
         console.log(JSON.stringify(Payload));
-        return { shipenginePayload: Payload, skip: !serviceCode, external_shipment_id: get(xmnlObj, "UniversalShipment.Shipment.DataContext.DataSourceCollection.DataSource.Key", "") };
+        return { shipenginePayload: Payload, skip: !serviceCode , external_shipment_id: get(xmnlObj, "UniversalShipment.Shipment.DataContext.DataSourceCollection.DataSource.Key", ""), serviceLevel};
     } catch (error) {
         console.error("Error in createShipEnginePayload:", error.message);
         throw error;
@@ -138,29 +139,6 @@ async function createShipEnginePayload(xmlData) {
 const getIfSignRequired = (obj, path) => {
     const isSignatureRequired = get(obj, path);
     return isSignatureRequired === "true" ? "signature" : "delivery";
-};
-
-const getServiceCode = (transportCompany, serviceLevel) => {
-    const serviceCodeMappings = {
-        UPSAIR: {
-            U1D: "ups_next_day_air_saver",
-            U2D: "ups_2nd_day_air",
-            U3D: "ups_3_day_select",
-            UPS: "ups_ground",
-            GRD: "ups_ground",
-            STD: "ups_ground",
-            "<EMPTY>": "ups_ground",
-        },
-        DHLWORIAH: {
-            STD: "UNKNOWN",
-        },
-        FEDEXMEM: {
-            STD: "fedex_ground",
-            "<EMPTY>": "fedex_ground",
-        },
-    };
-
-    return serviceCodeMappings[transportCompany]?.[serviceLevel === "" ? "<EMPTY>" : serviceLevel] ?? false;
 };
 
 const getCarrierId = (transportCompany) => {
