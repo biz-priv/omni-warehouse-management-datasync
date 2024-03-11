@@ -89,9 +89,10 @@ async function getServiceCode(transportCompany, serviceLevel) {
         }
     };
 
+    console.info("getServiceCode function params",params);
     try {
         const data = await dynamoDB.query(params).promise();
-        console.log("getServiceCodeData",data.Items)
+        console.info("getServiceCodeData",data.Items)
         if (get(data,"Items",[]).length === 0) {
             return false;
         } else {
