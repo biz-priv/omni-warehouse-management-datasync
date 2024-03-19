@@ -43,7 +43,8 @@ async function createShipEnginePayload(xmlData) {
                     unit: "inch",
                 },
                 label_messages: {
-                    reference1: `${get(xmnlObj, "UniversalShipment.Shipment.Order.OrderNumber", "")},${get(xmnlObj, "UniversalShipment.Shipment.DataContext.DataSourceCollection.DataSource.Key", "")},${get(xmnlObj, "UniversalShipment.Shipment.Order.ClientReference", "")}`,
+                    reference1: `${get(xmnlObj, "UniversalShipment.Shipment.Order.OrderNumber", "")}`,
+                    reference2: `${get(xmnlObj, "UniversalShipment.Shipment.Order.ClientReference", "")}`
                 },
             }));
         } else if (Object.keys(packingLineData).length > 0) {
@@ -60,8 +61,8 @@ async function createShipEnginePayload(xmlData) {
                         unit: "inch",
                     },
                     label_messages: {
-                        reference1: `${get(xmnlObj, "UniversalShipment.Shipment.Order.OrderNumber", "")},${get(xmnlObj, "UniversalShipment.Shipment.DataContext.DataSourceCollection.DataSource.Key", "")},${get(xmnlObj, "UniversalShipment.Shipment.Order.ClientReference", "")}`,
-                    },
+                        reference1: `${get(xmnlObj, "UniversalShipment.Shipment.Order.OrderNumber", "")}`,
+                        reference2: `${get(xmnlObj, "UniversalShipment.Shipment.Order.ClientReference", "")}`                    },
                 },
             ];
         } else {
