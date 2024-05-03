@@ -15,6 +15,7 @@ function:
     SHIPENGINE_API_KEY: ${ssm:/wms-shipengine/${self:provider.stage}/api/key}
     SHIPENGINE_API_ENDPOINT: ${ssm:/wms-shipengine/${self:provider.stage}/api/endpoint}
     ERROR_SNS_ARN: ${ssm:/omni-reports/${self:provider.stage}/error-notification/sns/arn}
+    ENVIRONMENT: ${self:provider.stage}
 
   package:
     patterns:

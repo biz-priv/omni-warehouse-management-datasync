@@ -22,6 +22,24 @@ async function makeAndStoreApiCall(apiName, payload, apiStatusId, externalShipme
     }
 }
 
+async function getProductValuesApiCall({payload}) {
+    try {
+        const response = await makeApiRequest('', payload);
+        const parser = new xml2js.Parser({
+            explicitArray: false,
+            mergeAttrs: true,
+        });
+
+        const jsonResponse = await parser.parseStringPromise(response)
+        console.log("jsonResponse",jsonResponse)
+        const GenCustomAddOnValueCollection = get(UniversalResponse,"Data.Native.Body.Product.GenCustomAddOnValueCollection"," ");
+        return GenCustomAddOnValueCollection
+    } catch (error) {
+        console.error("Error in getProductValuesApiCall:", error);
+        throw error;
+    }
+}
+
 async function handleApiError(apiName, error, apiStatusId, externalShipmentId) {
     console.error(`Error in ${apiName} API call: ${error.message}`);
     const params = {
@@ -60,7 +78,7 @@ async function makeApiRequest(apiName, payload) {
             };
         } else {
             const credentials = `${WMS_ADAPTER_USERNAME}:${WMS_ADAPTER_PASSWORD}`;
-            const base64Credentials = btoa(credentials);
+            const base64Credentials = Buffer.from(credentials).toString('base64');
             const authorizationHeader = `Basic ${base64Credentials}`;
             // WMS_ADAPTER_ENDPOINT env for wms endpoint
             ApiEndpoint = WMS_ADAPTER_ENDPOINT;
@@ -88,4 +106,4 @@ async function makeApiRequest(apiName, payload) {
     }
 }
 
-module.exports = { getS3Object, makeAndStoreApiCall, makeApiRequest,  };
+module.exports = { getS3Object, makeAndStoreApiCall, makeApiRequest, getProductValuesApiCall };

@@ -2,6 +2,7 @@ const AWS = require("aws-sdk");
 const xml2js = require("xml2js");
 const { get, map, set } = require("lodash");
 const { getServiceCode } = require("./dynamo");
+const { getProductValuesApiCall } = require("./requestor");
 const sns = new AWS.SNS();
 
 async function createShipEnginePayload(xmlData) {
@@ -28,6 +29,8 @@ async function createShipEnginePayload(xmlData) {
         console.info(`🙂 -> file: datahelper.js:1019 -> serviceLevel:`, serviceLevel);
         const serviceCode = await getServiceCode(transportCompany, serviceLevel);
         console.info(`🙂 -> file: datahelper.js:1021 -> serviceCode:`, serviceCode);
+        const consignorDocumentaryAddress = get(xmnlObj, "UniversalShipment.Shipment.OrganizationAddressCollection.OrganizationAddress", []).filter((add) => get(add, "AddressType") === "ConsignorDocumentaryAddress")[0];
+        const consignorDocumentary = get(consignorDocumentaryAddress, "OrganizationCode", "")
         let packingLineData = get(xmnlObj, "UniversalShipment.Shipment.PackingLineCollection.PackingLine", {});
         let packages;
         if (Array.isArray(packingLineData)) {
@@ -62,7 +65,8 @@ async function createShipEnginePayload(xmlData) {
                     },
                     label_messages: {
                         reference1: `${get(xmnlObj, "UniversalShipment.Shipment.Order.OrderNumber", "")}`,
-                        reference2: `${get(xmnlObj, "UniversalShipment.Shipment.Order.ClientReference", "")}`                    },
+                        reference2: `${get(xmnlObj, "UniversalShipment.Shipment.Order.ClientReference", "")}`
+                    },
                 },
             ];
         } else {
@@ -77,7 +81,7 @@ async function createShipEnginePayload(xmlData) {
                 name: get(orderLine, "Product.Description", ""),
                 quantity: parseFloat(get(orderLine, "QuantityMet", 0)),
             }))
-        } else if (Object.keys(packingLineData).length > 0) {
+        } else if (Object.keys(orderLine).length > 0) {
             items = [
                 {
                     sku: get(orderLine, "Product.Code", ""),
@@ -87,6 +91,48 @@ async function createShipEnginePayload(xmlData) {
             ]
         } else {
             items = [];
+        }
+
+        let products;
+        if (Array.isArray(orderLine)) {
+            products = await Promise.all(orderLine.map(async (orderLine) => {
+                const { Product, QuantityMet, UnitPriceAfterDiscount } = orderLine;
+                const getProductValuesPayload = getProductValues(get(Product, "Code", ""), consignorDocumentary);
+                const getProductValuesApiCalls = await getProductValuesApiCall({ payload: getProductValuesPayload });
+                const countryOfOrigin = get(getProductValuesApiCalls, "GenCustomAddOnValue[1].Data");
+                const harmonizedTariffCode = get(getProductValuesApiCalls, "GenCustomAddOnValue[0].Data");
+                return {
+                    description: get(Product, "Description", ""),
+                    quantity: parseFloat(get(QuantityMet, "", 0)),
+                    value: {
+                        currency: "USD",
+                        amount: parseFloat(get(UnitPriceAfterDiscount, "", 0))
+                    },
+                    country_of_origin: countryOfOrigin,
+                    harmonized_tariff_code: harmonizedTariffCode
+                };
+            }));
+        } else if (Object.keys(orderLine).length > 0) {
+            const { Product, QuantityMet, UnitPriceAfterDiscount } = orderLine;
+            const getProductValuesPayload = getProductValues(get(Product, "Code", ""), consignorDocumentary);
+            const getProductValuesApiCalls = await getProductValuesApiCall({ payload: getProductValuesPayload });
+            const countryOfOrigin = get(getProductValuesApiCalls, "GenCustomAddOnValue[1].Data");
+            const harmonizedTariffCode = get(getProductValuesApiCalls, "GenCustomAddOnValue[0].Data");
+            products = [
+                {
+                    description: get(Product, "Description", ""),
+                    quantity: parseFloat(get(QuantityMet, "", 0)),
+                    value: {
+                        currency: "USD",
+                        amount: parseFloat(get(UnitPriceAfterDiscount, "", 0))
+                    },
+                    country_of_origin: countryOfOrigin,
+                    harmonized_tariff_code: harmonizedTariffCode
+                }
+            ];
+        }
+         else {
+            products = [];
         }
         const Payload = {
             label_download_type: "inline",
@@ -129,6 +175,16 @@ async function createShipEnginePayload(xmlData) {
         if(carrierId){
             set(Payload, "shipment.carrier_id", carrierId)
         }
+        if (transportCompany === "DHLWORIAH") {
+            Payload.customs = {
+                contents: "Merchandise",
+                non_delivery: "return_to_sender"
+            };
+            Payload.products
+        }
+        if (process.env.ENVIRONMENT === "dev" && transportCompany === "DHLWORIAH") {
+            Payload.test_label = true;
+        }
         console.log(JSON.stringify(Payload));
         return { shipenginePayload: Payload, skip: !serviceCode , external_shipment_id: get(xmnlObj, "UniversalShipment.Shipment.DataContext.DataSourceCollection.DataSource.Key", ""), serviceLevel};
     } catch (error) {
@@ -143,7 +199,10 @@ const getIfSignRequired = (obj, path) => {
 };
 
 const getCarrierId = (transportCompany) => {
-    const carrierIds = { UPSAIR: "se-5840017" };
+    const carrierIds = {
+        UPSAIR: "se-5840017",
+        DHLWORIAH: "se-6508487"
+    };
     return get(carrierIds, transportCompany, false);
 };
 
@@ -227,6 +286,52 @@ function trackingShipmentPayload(data, shipment_id, OrderNumber) {
     }
 }
 
+function getProductValues(ProductCode, OrganizationCode) {
+    try {
+        const builder = new xml2js.Builder({
+            headless: true,
+            renderOpts: { pretty: true, indent: "    " },
+        });
+
+        const xmlData = {
+            "Native": {
+                "$": {
+                    "xmlns": "http://www.cargowise.com/Schemas/Native"
+                },
+                "Body": {
+                    "Product": {
+                        "CriteriaGroup": {
+                            "$": {
+                                "Type": "Partial"
+                            },
+                            "Criteria": [
+                                {
+                                    "_": ProductCode,
+                                    "$": {
+                                        "Entity": "OrgSupplierPart",
+                                        "FieldName": "PartNum"
+                                    }
+                                },
+                                {
+                                    "_": OrganizationCode,
+                                    "$": {
+                                        "Entity": "OrgSupplierPart.OrgPartRelation.OrgHeader",
+                                        "FieldName": "Code"
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        };
+        return builder.buildObject(xmlData);
+    } catch (error) {
+        console.error("Error in getProductValues:", error);
+        throw error;
+    }
+}
+
 function errorMessagePayload(shipment_id, error) {
     try {
         const builder = new xml2js.Builder({
@@ -256,7 +361,7 @@ function errorMessagePayload(shipment_id, error) {
         };
         return builder.buildObject(xmlData);
     } catch (error) {
-        console.error("Error in trackingShipmentPayload:", error);
+        console.error("Error in errorMessagePayload:", error);
         throw error;
     }
 }
@@ -287,4 +392,4 @@ async function sendSNSNotification(subject, message) {
     }
 }
 
-module.exports = { createShipEnginePayload, labelEventPayload, trackingShipmentPayload, sendSNSNotification, errorMessagePayload };
+module.exports = { createShipEnginePayload, labelEventPayload, trackingShipmentPayload, sendSNSNotification, errorMessagePayload, getProductValues };
