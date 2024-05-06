@@ -96,35 +96,33 @@ async function createShipEnginePayload(xmlData) {
         let products;
         if (Array.isArray(orderLine)) {
             products = await Promise.all(orderLine.map(async (orderLine) => {
-                const { Product, QuantityMet, UnitPriceAfterDiscount } = orderLine;
-                const getProductValuesPayload = getProductValues(get(Product, "Code", ""), consignorDocumentary);
+                const getProductValuesPayload = getProductValues(get(orderLine, "Product.Code", ""), consignorDocumentary);
                 const getProductValuesApiCalls = await getProductValuesApiCall({ payload: getProductValuesPayload });
                 const countryOfOrigin = get(getProductValuesApiCalls, "GenCustomAddOnValue[1].Data");
                 const harmonizedTariffCode = get(getProductValuesApiCalls, "GenCustomAddOnValue[0].Data");
                 return {
-                    description: get(Product, "Description", ""),
-                    quantity: parseFloat(get(QuantityMet, "", 0)),
+                    description: get(orderLine, "Product.Description", ""),
+                    quantity: parseFloat(get(orderLine, "QuantityMet", 0)),
                     value: {
                         currency: "USD",
-                        amount: parseFloat(get(UnitPriceAfterDiscount, "", 0))
+                        amount: parseFloat(get(orderLine, "UnitPriceAfterDiscount", 0)),
                     },
                     country_of_origin: countryOfOrigin,
                     harmonized_tariff_code: harmonizedTariffCode
                 };
             }));
         } else if (Object.keys(orderLine).length > 0) {
-            const { Product, QuantityMet, UnitPriceAfterDiscount } = orderLine;
-            const getProductValuesPayload = getProductValues(get(Product, "Code", ""), consignorDocumentary);
+            const getProductValuesPayload = getProductValues(get(orderLine, "Product.Code", ""), consignorDocumentary);
             const getProductValuesApiCalls = await getProductValuesApiCall({ payload: getProductValuesPayload });
             const countryOfOrigin = get(getProductValuesApiCalls, "GenCustomAddOnValue[1].Data");
             const harmonizedTariffCode = get(getProductValuesApiCalls, "GenCustomAddOnValue[0].Data");
             products = [
                 {
-                    description: get(Product, "Description", ""),
-                    quantity: parseFloat(get(QuantityMet, "", 0)),
+                    description: get(orderLine, "Product.Description", ""),
+                    quantity: parseFloat(get(orderLine, "QuantityMet", 0)),
                     value: {
                         currency: "USD",
-                        amount: parseFloat(get(UnitPriceAfterDiscount, "", 0))
+                        amount:parseFloat(get(orderLine, "UnitPriceAfterDiscount", 0)),
                     },
                     country_of_origin: countryOfOrigin,
                     harmonized_tariff_code: harmonizedTariffCode
@@ -134,53 +132,100 @@ async function createShipEnginePayload(xmlData) {
          else {
             products = [];
         }
-        const Payload = {
-            label_download_type: "inline",
-            shipment: {
-                ship_from: {
-                    name: "Omni Logistics",
-                    phone: "856-579-7710",
-                    address_line1: "970 Harding Highway, Suite 200",
-                    city_locality: "Penns Grove",
-                    state_province: "NJ",
-                    postal_code: "08069",
-                    country_code: "US",
-                    address_residential_indicator: "no",
-                },
-                //external_shipment_id: get(xmnlObj, "UniversalShipment.Shipment.DataContext.DataSourceCollection.DataSource.Key", ""),
-                confirmation: getIfSignRequired(xmnlObj, "UniversalShipment.Shipment.IsSignatureRequired"),
-                shipment_number: get(xmnlObj, "UniversalShipment.Shipment.Order.OrderNumber", ""),
-                external_order_id: get(xmnlObj, "UniversalShipment.Shipment.Order.ClientReference", ""),
-                items,
-                service_code: serviceCode ?? "",
-                ship_to: {
-                    email: get(consigneeAddress, "Email", ""),
-                    address_line3: get(consigneeAddress, "AdditionalAddressInformation", ""),
-                    address_line1: get(consigneeAddress, "Address1", ""),
-                    address_line2: get(consigneeAddress, "Address2", ""),
-                    city_locality: get(consigneeAddress, "City", ""),
-                    company_name: get(consigneeAddress, "CompanyName", ""),
-                    name: get(consigneeAddress, "Contact", ""),
-                    country_code: getCountryCode(transportCompany,get(consigneeAddress, "Country.Code", ""), get(consigneeAddress, "State._", "")),
-                    address_residential_indicator: addressResidentialIndicator,
-                    phone: get(consigneeAddress, "Phone", ""),
-                    postal_code: get(consigneeAddress, "Postcode", ""),
-                    state_province: get(consigneeAddress, "State._", ""),
-                },
-                packages: packages,
-            },
-        };
-        const carrierId = getCarrierId(transportCompany)
-        console.info(`🙂 -> file: datahelper.js:985 -> carrierId:`, carrierId);
-        if(carrierId){
-            set(Payload, "shipment.carrier_id", carrierId)
+        if(transportCompany === "DHLWORIAH"){
+            packages.forEach((package) => {
+                package.products = products;
+            });
         }
-        if (transportCompany === "DHLWORIAH") {
-            Payload.customs = {
-                contents: "Merchandise",
-                non_delivery: "return_to_sender"
+        let Payload;
+        if(transportCompany === "DHLWORIAH"){
+            Payload = {
+                label_download_type: "inline",
+                shipment: {
+                    ship_from: {
+                        name: "Omni Logistics",
+                        phone: "856-579-7710",
+                        address_line1: "970 Harding Highway, Suite 200",
+                        city_locality: "Penns Grove",
+                        state_province: "NJ",
+                        postal_code: "08069",
+                        country_code: "US",
+                        address_residential_indicator: "no",
+                    },
+                    //external_shipment_id: get(xmnlObj, "UniversalShipment.Shipment.DataContext.DataSourceCollection.DataSource.Key", ""),
+                    confirmation: getIfSignRequired(xmnlObj, "UniversalShipment.Shipment.IsSignatureRequired"),
+                    customs: {
+                        contents: "Merchandise",
+                        non_delivery: "return_to_sender"
+                    },
+                    shipment_number: get(xmnlObj, "UniversalShipment.Shipment.Order.OrderNumber", ""),
+                    external_order_id: get(xmnlObj, "UniversalShipment.Shipment.Order.ClientReference", ""),
+                    items,
+                    service_code: serviceCode ?? "",
+                    ship_to: {
+                        company_name: get(consigneeAddress, "CompanyName", ""),
+                        address_line1: get(consigneeAddress, "Address1", ""),
+                        address_line2: get(consigneeAddress, "Address2", ""),
+                        address_line3: get(consigneeAddress, "AdditionalAddressInformation", ""),
+                        city_locality: get(consigneeAddress, "City", ""),
+                        state_province: get(consigneeAddress, "State._", ""),
+                        postal_code: get(consigneeAddress, "Postcode", ""),
+                        country_code: getCountryCode(transportCompany,get(consigneeAddress, "Country.Code", ""), get(consigneeAddress, "State._", "")),
+                        email: get(consigneeAddress, "Email", ""),
+                        name: get(consigneeAddress, "Contact", ""),
+                        address_residential_indicator: addressResidentialIndicator,
+                        phone: get(consigneeAddress, "Phone", ""),
+                    },
+                    packages: packages,
+                },
             };
-            Payload.products
+            const carrierId = getCarrierId(transportCompany)
+            console.info(`🙂 -> file: datahelper.js:985 -> carrierId:`, carrierId);
+            if(carrierId){
+                set(Payload, "shipment.carrier_id", carrierId)
+            }
+        }else{
+            Payload = {
+                label_download_type: "inline",
+                shipment: {
+                    ship_from: {
+                        name: "Omni Logistics",
+                        phone: "856-579-7710",
+                        address_line1: "970 Harding Highway, Suite 200",
+                        city_locality: "Penns Grove",
+                        state_province: "NJ",
+                        postal_code: "08069",
+                        country_code: "US",
+                        address_residential_indicator: "no",
+                    },
+                    //external_shipment_id: get(xmnlObj, "UniversalShipment.Shipment.DataContext.DataSourceCollection.DataSource.Key", ""),
+                    confirmation: getIfSignRequired(xmnlObj, "UniversalShipment.Shipment.IsSignatureRequired"),
+                    shipment_number: get(xmnlObj, "UniversalShipment.Shipment.Order.OrderNumber", ""),
+                    external_order_id: get(xmnlObj, "UniversalShipment.Shipment.Order.ClientReference", ""),
+                    items,
+                    service_code: serviceCode ?? "",
+                    ship_to: {
+                        email: get(consigneeAddress, "Email", ""),
+                        address_line3: get(consigneeAddress, "AdditionalAddressInformation", ""),
+                        address_line1: get(consigneeAddress, "Address1", ""),
+                        address_line2: get(consigneeAddress, "Address2", ""),
+                        city_locality: get(consigneeAddress, "City", ""),
+                        company_name: get(consigneeAddress, "CompanyName", ""),
+                        name: get(consigneeAddress, "Contact", ""),
+                        country_code: getCountryCode(transportCompany,get(consigneeAddress, "Country.Code", ""), get(consigneeAddress, "State._", "")),
+                        address_residential_indicator: addressResidentialIndicator,
+                        phone: get(consigneeAddress, "Phone", ""),
+                        postal_code: get(consigneeAddress, "Postcode", ""),
+                        state_province: get(consigneeAddress, "State._", ""),
+                    },
+                    packages: packages,
+                },
+            };
+            const carrierId = getCarrierId(transportCompany)
+            console.info(`🙂 -> file: datahelper.js:985 -> carrierId:`, carrierId);
+            if(carrierId){
+                set(Payload, "shipment.carrier_id", carrierId)
+            }
         }
         if (process.env.ENVIRONMENT === "dev" && transportCompany === "DHLWORIAH") {
             Payload.test_label = true;
@@ -386,7 +431,7 @@ async function sendSNSNotification(subject, message) {
 
     try {
         await sns.publish(params).promise();
-        console.log("SNS notification sent successfully.");
+        console.info("SNS notification sent successfully.");
     } catch (snsError) {
         console.error("Error sending SNS notification:", snsError);
     }

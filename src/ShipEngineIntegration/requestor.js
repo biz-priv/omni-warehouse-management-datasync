@@ -5,6 +5,7 @@ const { WMS_ADAPTER_ENDPOINT, WMS_ADAPTER_USERNAME, WMS_ADAPTER_PASSWORD, SHIPEN
 const { storeApiLog, updateApiStatus, updateDynamo } = require("./dynamo");
 const { get } = require("lodash");
 const { errorMessagePayload } = require("./datahelper");
+const xml2js = require("xml2js");
 
 let shipmentId;
 async function makeAndStoreApiCall(apiName, payload, apiStatusId, externalShipmentId) {
@@ -32,7 +33,7 @@ async function getProductValuesApiCall({payload}) {
 
         const jsonResponse = await parser.parseStringPromise(response)
         console.log("jsonResponse",jsonResponse)
-        const GenCustomAddOnValueCollection = get(UniversalResponse,"Data.Native.Body.Product.GenCustomAddOnValueCollection"," ");
+        const GenCustomAddOnValueCollection = get(jsonResponse,"UniversalResponse.Data.Native.Body.Product.OrgSupplierPart.GenCustomAddOnValueCollection"," ");
         return GenCustomAddOnValueCollection
     } catch (error) {
         console.error("Error in getProductValuesApiCall:", error);
