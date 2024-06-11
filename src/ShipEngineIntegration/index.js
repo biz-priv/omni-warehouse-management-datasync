@@ -1,3 +1,10 @@
+/*
+* File: src\ShipEngineIntegration\index.js
+* Project: Omni-warehouse-management-datasync
+* Author: Bizcloud Experts
+* Date: 2024-02-28
+* Confidential and Proprietary
+*/
 const AWS = require("aws-sdk");
 const { get } = require("lodash");
 const uuid = require("uuid");

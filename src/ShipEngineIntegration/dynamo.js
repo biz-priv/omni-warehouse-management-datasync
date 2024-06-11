@@ -1,3 +1,10 @@
+/*
+* File: src\ShipEngineIntegration\dynamo.js
+* Project: Omni-warehouse-management-datasync
+* Author: Bizcloud Experts
+* Date: 2024-03-11
+* Confidential and Proprietary
+*/
 const AWS = require("aws-sdk");
 const { unset, get } = require("lodash");
 const momentTZ = require("moment-timezone");

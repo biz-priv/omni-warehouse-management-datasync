@@ -1,3 +1,10 @@
+/*
+* File: src\ShipEngineIntegration\datahelper.js
+* Project: Omni-warehouse-management-datasync
+* Author: Bizcloud Experts
+* Date: 2024-03-19
+* Confidential and Proprietary
+*/
 const AWS = require("aws-sdk");
 const xml2js = require("xml2js");
 const { get, map, set } = require("lodash");

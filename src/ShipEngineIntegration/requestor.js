@@ -1,3 +1,10 @@
+/*
+* File: src\ShipEngineIntegration\requestor.js
+* Project: Omni-warehouse-management-datasync
+* Author: Bizcloud Experts
+* Date: 2024-02-28
+* Confidential and Proprietary
+*/
 const AWS = require("aws-sdk");
 const axios = require("axios");
 const s3 = new AWS.S3();
